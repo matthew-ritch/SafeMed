@@ -1,0 +1,9 @@
+.env
+.vscode
+
+data
+a.py
+db.sqlite3
+
+*.pyc
+*.DS_Store
