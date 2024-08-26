@@ -41,17 +41,20 @@ if False:
 
     print('MDR and DEVICES Loaded')
 
-with codecs.open('data/patientproblemcode.txt', 'r', encoding='utf-8', errors='ignore') as f:
-        pp = pd.read_csv(f, delimiter='|')
-with codecs.open('data/patientproblemcodes.csv', 'r', encoding='utf-8', errors='ignore') as f:
-    ppc = pd.read_csv(f, delimiter=',', header=None)
-with codecs.open('data/foidevproblem.txt', 'r', encoding='utf-8', errors='ignore') as f:
-        dp = pd.read_csv(f, delimiter='|', header=None)
-with codecs.open('data/deviceproblemcodes.csv', 'r', encoding='utf-8', errors='ignore') as f:
-    dpc = pd.read_csv(f, delimiter=',', header=None)
+if True:
+    with codecs.open('data/patientproblemcode.txt', 'r', encoding='utf-8', errors='ignore') as f:
+            pp = pd.read_csv(f, delimiter='|')
+    with codecs.open('data/patientproblemcodes.csv', 'r', encoding='utf-8', errors='ignore') as f:
+        ppc = pd.read_csv(f, delimiter=',', header=None)
+    with codecs.open('data/foidevproblem.txt', 'r', encoding='utf-8', errors='ignore') as f:
+            dp = pd.read_csv(f, delimiter='|', header=None)
+    with codecs.open('data/deviceproblemcodes.csv', 'r', encoding='utf-8', errors='ignore') as f:
+        dpc = pd.read_csv(f, delimiter=',', header=None)
 
-pp = pp.drop_duplicates(subset = ['MDR_REPORT_KEY','PROBLEM_CODE'])
-dp = dp.drop_duplicates(subset = [0,1])
+    pp = pp.drop_duplicates(subset = ['MDR_REPORT_KEY','PROBLEM_CODE'])
+    pp = pp[~pp[['MDR_REPORT_KEY','PROBLEM_CODE']].isna().any(axis=1)]
+    dp = dp.drop_duplicates(subset = [0,1])
+    dp = dp[~dp[[0,1]].isna().any(axis=1)]
 
 if False:
     Manufacturer.objects.all().delete()
@@ -111,7 +114,10 @@ if False:
     print('\rMDRs created')
 
 if True:
-    PatientProblem.objects.all().delete()
+    MDR.patient_problem.through.objects.all().delete()
+    mdrs = np.array(MDR.objects.all().values_list('mdr_report_key', flat=True))
+    pp = pp[np.isin(pp.MDR_REPORT_KEY, np.array(MDR.objects.all().values_list('mdr_report_key', flat=True)))]
+    pp = pp[np.isin(pp.PROBLEM_CODE, np.array(PatientProblem.objects.all().values_list('code', flat=True)))].reset_index(drop=True)
 
     s = pp.shape[0]
     tos = []
@@ -125,15 +131,19 @@ if True:
     MDR.patient_problem.through.objects.bulk_create(tos)
 
 if True:
-    DeviceProblem.objects.all().delete()
+    MDR.device_problem.through.objects.all().delete()
 
-    s = len(np.unique(dp['0']))
+    mdrs = np.array(MDR.objects.all().values_list('mdr_report_key', flat=True))
+    dp = dp[np.isin(dp[0], np.array(MDR.objects.all().values_list('mdr_report_key', flat=True)))]
+    dp = dp[np.isin(dp[1], np.array(DeviceProblem.objects.all().values_list('code', flat=True)))].reset_index(drop=True)
+
+    s = len(np.unique(dp[0]))
     tos = []
 
     for i, x in dp.iterrows():
         tos.append(MDR.device_problem.through(
-            mdr_id=x['0'],
-            deviceproblem_id=x['1'],
+            mdr_id=x[0],
+            deviceproblem_id=x[1],
         ))
 
     MDR.device_problem.through.objects.bulk_create(tos)
