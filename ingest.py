@@ -31,7 +31,7 @@ if True:
     dev['GENERIC_NAME'] = [mn_bn_map[x.MODEL_NUMBER] if x.MODEL_NUMBER in mn_bn_map.keys() else x.GENERIC_NAME for i, x in dev.iterrows()]
 
     #other cleaning
-    dev['MANUFACTURER_D_NAME'] = dev['MANUFACTURER_D_NAME'].str.replace('[.,]|INC|LTD','', regex=True).str.strip()
+    dev['MANUFACTURER_D_NAME'] = dev['MANUFACTURER_D_NAME'].str.replace('[.,]|INC|LTD(?!O)','', regex=True).str.strip()
     dev = dev[dev.MDR_REPORT_KEY.astype(str).str.isnumeric()]
     dev = dev.drop_duplicates(subset='MDR_REPORT_KEY')
 

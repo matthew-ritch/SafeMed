@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+
+<html>
+    
+    <form action = "/manufacturer_search" method="post">
+        {% csrf_token %}
+        <table>
+            <tr>
+                <td>Name:</td><td><input id="name_search" type="text" name="name_search" value="{{current_name_search}}"></td>
+            </tr>
+        </table>
+        <input type="submit" valye="Submit">
+    </form>
+
+    {% if matches %}
+        <h2>{{Results}}</h2>
+        <ul>
+            {% for match in matches %}
+                <li>{{ match.name }}</li>
+                <ul>
+                    {% for device in match.device_set.all %}
+                        <li>{{ device.brand_name }}</li>
+                    {% endfor %}
+                </ul>
+            {% endfor %}
+        </ul>
+    {% endif %}
+
+
+</html>
