@@ -9,7 +9,7 @@ import codecs
 
 from problems.models import Manufacturer, Device, MDR, PatientProblem, DeviceProblem
 
-if False:
+if True:
     #device
     with codecs.open('data/DEVICE.txt', 'r', encoding='utf-8', errors='ignore') as f:
         dev = pd.read_csv(f, delimiter='|')
@@ -20,7 +20,7 @@ if False:
     n_distinct = name_frequencies.groupby('MODEL_NUMBER').agg(lambda x: len(np.unique(x)))
     mns_with_multiple = n_distinct[n_distinct['BRAND_NAME']>1]
     mn_bn_map = name_frequencies.sort_values(by='n', ascending=False).groupby('MODEL_NUMBER').first()['BRAND_NAME'][mns_with_multiple.index].to_dict()
-    dev['BRAND_NAME'] = dev['MODEL_NUMBER'].replace(mn_bn_map)
+    dev['BRAND_NAME'] = [mn_bn_map[x.MODEL_NUMBER] if x.MODEL_NUMBER in mn_bn_map.keys() else x.BRAND_NAME for i, x in dev.iterrows()]
 
     #if there are multiple generic names under a product number, take the most common
     dev['n'] = 1
@@ -28,7 +28,7 @@ if False:
     n_distinct = name_frequencies.groupby('MODEL_NUMBER')['GENERIC_NAME'].agg([lambda x: len(np.unique(x)), lambda y: '<>'.join(y)])
     mns_with_multiple = n_distinct[n_distinct['<lambda_0>']>1]
     mn_bn_map = name_frequencies.sort_values(by='n', ascending=False).groupby('MODEL_NUMBER').first()['GENERIC_NAME'][mns_with_multiple.index].to_dict()
-    dev['GENERIC_NAME'] = dev['MODEL_NUMBER'].replace(mn_bn_map)
+    dev['GENERIC_NAME'] = [mn_bn_map[x.MODEL_NUMBER] if x.MODEL_NUMBER in mn_bn_map.keys() else x.GENERIC_NAME for i, x in dev.iterrows()]
 
     #other cleaning
     dev['MANUFACTURER_D_NAME'] = dev['MANUFACTURER_D_NAME'].str.replace('[.,]|INC|LTD','', regex=True).str.strip()
@@ -56,7 +56,7 @@ if True:
     dp = dp.drop_duplicates(subset = [0,1])
     dp = dp[~dp[[0,1]].isna().any(axis=1)]
 
-if False:
+if True:
     Manufacturer.objects.all().delete()
     Device.objects.all().delete()
 
@@ -80,7 +80,7 @@ if False:
         ind += 1
     print('\rDevices Ingested')
 
-if False:
+if True:
     PatientProblem.objects.all().delete()
     DeviceProblem.objects.all().delete()
 
@@ -96,19 +96,19 @@ if False:
     DeviceProblem.objects.bulk_create([PatientProblem(code=x[0], description=x[1]) for i, x in dpc.iterrows()])
     print('Device Problem Codes created')
 
-if False:
+if True:
     MDR.objects.all().delete()
+    devices = np.array(Device.objects.all().values_list('model_number', flat=True))
 
     #mdrs
     joined = dev.merge(mdr, how='left', on='MDR_REPORT_KEY', suffixes=['_dev','_mdr'])
+    joined = joined[np.isin(joined.MODEL_NUMBER, devices)] #so we can skip the filter step
     rs = []
     s = joined.shape[0]
     i = 0
     for i,x in joined.iterrows():
         print(f"\r{int(100*i/s)}%", end="")
-        d = Device.objects.filter(model_number = x.MODEL_NUMBER)
-        if d:   
-            rs.append(MDR(mdr_report_key = x.MDR_REPORT_KEY, device = d[0]))
+        rs.append(MDR(mdr_report_key = x.MDR_REPORT_KEY, device = Device.objects.get(model_number = x.MODEL_NUMBER)))
         i += 1
     MDR.objects.bulk_create(rs)
     print('\rMDRs created')
@@ -129,6 +129,7 @@ if True:
             ))
 
     MDR.patient_problem.through.objects.bulk_create(tos)
+    print('\rPatient Problems linked')
 
 if True:
     MDR.device_problem.through.objects.all().delete()
@@ -147,3 +148,4 @@ if True:
         ))
 
     MDR.device_problem.through.objects.bulk_create(tos)
+    print('\rDevice Problems linked')

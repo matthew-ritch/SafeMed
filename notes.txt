@@ -6,28 +6,9 @@
     - product_problem_flag: whether or not a report was about the quality, performance or safety of a device
     - event type: D = Death IN = Injury IL = Injury IJ = Injury M = Malfunction O = Other
 
-Models
-
-device
-    MODEL_NUMBER pk
-    BRAND_NAME
-    MANUFACTURER
-mdr
-    MDR_REPORT_KEY pk
-    REMEDIAL_ACTION
-patientproblem
-    code pk
-    description
-    manytomany mdr
-    - use patientproblemcode.txt and patientproblemcodes.csv
-deviceproblem
-    code pk
-    description
-    manytomany mdr
-    - use foidevproblem.txt and deviceproblemcodes.csv
-
 todo
 1. ingest
+    - why are some manufacturers not showing any devices?
 2. Simplest scheme for reporting:
     - get number of device problems per device
         - devices > mdrs for that device > recorded device problems
