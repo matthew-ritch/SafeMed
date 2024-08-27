@@ -2,20 +2,26 @@ from django.shortcuts import render
 from django.http import JsonResponse
 from problems.models import Manufacturer, Device, MDR, DeviceProblem, PatientProblem
 
+from django.db.models import Count
+
 import numpy as np
 
-def list_devices_by_manufacturer(request):
+def list_manufacturers(request):
     context = {}
     
-    ms = Manufacturer.objects.all()
+    ms = Manufacturer.objects.all().order_by('name')
     for m in ms:
-        devices = np.array(m.device_set.all().values_list('generic_name',flat=True)).astype(str) + ' XXX ' + np.array(m.device_set.all().values_list('brand_name',flat=True)).astype(str)
-        context[m.name] = list(devices)
-    # ds = Device.objects.all()
-    # for d in ds:
-    #     ms = np.array(d.manufacturer.all().values_list('name',flat=True)) # + ' XXX ' + np.array(d.manufacturer.all().values_list('name',flat=True))
-    #     context[d.brand_name] = list(ms)
+        devices = m.device_set.all().annotate(count=Count('mdr')).filter(count__gte=1)
+        if len(devices) > 0:
+            context[m.name] = [{'brand_name':d.brand_name,'generic_name':d.generic_name,'model_number':d.model_number} for d in devices]
+    return JsonResponse(context)
 
+def list_devices(request):
+    context = {}
+    ds = Device.objects.all().order_by('model_number').annotate(count=Count('mdr')).filter(count__gte=1)
+    for d in ds:
+        ms = np.array(d.manufacturer.all().values_list('name',flat=True))
+        context[d.brand_name] = {'brand_name':d.brand_name,'generic_name':d.generic_name,'model_number':d.model_number, 'manufacturers':list(ms)}
     return JsonResponse(context)
 
 def device_info(request, mn):

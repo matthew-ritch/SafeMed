@@ -4,7 +4,8 @@ from problems import views
 
 urlpatterns = [
     # ex: /polls/
-    path("", views.list_devices_by_manufacturer, name="index"),
-    path("list", views.list_devices_by_manufacturer, name="list_devices_by_manufacturer",),
+    path("", views.list_manufacturers, name="index"),
+    path("list_manufacturers", views.list_manufacturers, name="list_manufacturers",),
+    path("list_devices", views.list_devices, name="list_devices",),
     path("device_info/<str:mn>", views.device_info, name="device_info",)
 ]
