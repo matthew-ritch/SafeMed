@@ -52,7 +52,7 @@ def manufacturer_search(request):
     context = {}
     if request.method == 'POST':
         matches = Manufacturer.objects.all().filter(name__contains=request.POST['name_search']).order_by('name')
-        matches = matches.annotate(n_devices=Count('device')).filter(n_devices__gte=1)
+        matches = matches.annotate(n_devices=Count('device')).filter(n_devices__gte=1).distinct()
         context['matches'] = matches
         print(context)
 
@@ -63,9 +63,11 @@ def device_search(request):
     if request.method == 'POST':
         matches = Device.objects.all().filter(brand_name__contains=request.POST['device_name_search']).order_by('brand_name') | Device.objects.all().filter(generic_name__contains=request.POST['device_name_search']).order_by('brand_name')
         matches = matches & Device.objects.all().filter(manufacturer__name__contains=request.POST['manufacturer_name_search']).order_by('brand_name')
-        matches = matches.exclude(model_number__contains="/")
+        matches = matches.exclude(model_number__contains="/").distinct()
+        for m in matches:
+            m.mnames = ', '.join(np.sort(m.manufacturer.all().values_list('name',flat=True)))
         context['matches'] = matches
-        print(context)
+
         context['current_device_name_search'] = request.POST['device_name_search']
         context['current_manufacturer_name_search'] = request.POST['manufacturer_name_search']
 

@@ -9,20 +9,29 @@
                 <td>Device Name:</td><td><input id="device_name_search" type="text" name="device_name_search" value="{{current_device_name_search}}"></td>
             </tr>
             <tr>
-                <td>Manufacturer Name:</td><td><input id="manufacturer_name_search" type="text" name="manufacturer_name_search" value="{{currentmanufacturer_name_search}}"></td>
+                <td>Manufacturer Name:</td><td><input id="manufacturer_name_search" type="text" name="manufacturer_name_search" value="{{current_manufacturer_name_search}}"></td>
             </tr>
         </table>
         <input type="submit" valye="Submit">
     </form>
 
     {% if matches %}
-        <h2>{{Results}}</h2>
-        <ul>
-            {% for match in matches %}
-                <li>{{ match.brand_name }} ({{ match.generic_name }}): <a href={% url 'device_info' match.model_number %}>Page</a> </li>
-            {% endfor %}
-        </ul>
+        {% regroup matches by mnames as mmatches %}
+            <ul>
+                {% for mname, matches in mmatches %}
+                    <li>{{mname}}</li>
+                    <ul>
+                        {% for match in matches %}
+                            <li><a href={% url 'device_info' match.model_number %}>{{ match.model_number }}</a></li>
+                            <ul>
+                                <li>{{ match.brand_name }}</li>
+                                <li>{{ match.generic_name }}</li>
+                                <li>{{ match.mnames }}</li>
+                            </ul>
+                        {% endfor %}
+                    </ul>
+                {% endfor %}
+            </ul>
     {% endif %}
-
 
 </html>
