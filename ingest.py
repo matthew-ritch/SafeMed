@@ -14,6 +14,7 @@ if True:
     with codecs.open('data/DEVICE.txt', 'r', encoding='utf-8', errors='ignore') as f:
         dev = pd.read_csv(f, delimiter='|')
 
+
     #if there are multiple brand names under a product number, take the most common
     dev['n'] = 1
     name_frequencies = dev[~(dev.MODEL_NUMBER == 'nan')].groupby(['MODEL_NUMBER', 'BRAND_NAME'], as_index=False).count()
@@ -29,6 +30,14 @@ if True:
     mns_with_multiple = n_distinct[n_distinct['<lambda_0>']>1]
     mn_bn_map = name_frequencies.sort_values(by='n', ascending=False).groupby('MODEL_NUMBER').first()['GENERIC_NAME'][mns_with_multiple.index].to_dict()
     dev['GENERIC_NAME'] = [mn_bn_map[x.MODEL_NUMBER] if x.MODEL_NUMBER in mn_bn_map.keys() else x.GENERIC_NAME for i, x in dev.iterrows()]
+
+    #if there are multiple product numbers for one manufacturer and brand name, take the most common
+    dev['n'] = 1
+    name_frequencies = dev.groupby(['MODEL_NUMBER', 'BRAND_NAME', 'MANUFACTURER_D_NAME'], as_index=False).count()
+    n_distinct = name_frequencies.groupby(['BRAND_NAME', 'MANUFACTURER_D_NAME'])['MODEL_NUMBER'].agg([lambda x: len(np.unique(x)), lambda y: '<>'.join(y)])
+    mns_with_multiple = n_distinct[n_distinct['<lambda_0>']>1]
+    mn_bn_map = name_frequencies.sort_values(by='n', ascending=False).groupby(['BRAND_NAME', 'MANUFACTURER_D_NAME']).first()['MODEL_NUMBER'][mns_with_multiple.index].to_dict()
+    dev['MODEL_NUMBER'] = [mn_bn_map[tuple(x[['BRAND_NAME', 'MANUFACTURER_D_NAME']].values)] if tuple(x[['BRAND_NAME', 'MANUFACTURER_D_NAME']].values) in mn_bn_map.keys() else x.MODEL_NUMBER for i, x in dev.iterrows()]
 
     #other cleaning
     dev['MANUFACTURER_D_NAME'] = dev['MANUFACTURER_D_NAME'].str.replace('[.,]|INC|LTD(?!O)','', regex=True).str.strip()
@@ -99,16 +108,15 @@ if True:
 if True:
     MDR.objects.all().delete()
     devices = np.array(Device.objects.all().values_list('model_number', flat=True))
-
+    dev_to_add = dev[np.isin(dev.MODEL_NUMBER, devices)] #so we can skip the filter step
+    devices = Device.objects.all()
     #mdrs
-    joined = dev.merge(mdr, how='left', on='MDR_REPORT_KEY', suffixes=['_dev','_mdr'])
-    joined = joined[np.isin(joined.MODEL_NUMBER, devices)] #so we can skip the filter step
     rs = []
-    s = joined.shape[0]
+    s = dev_to_add.shape[0]
     i = 0
-    for i,x in joined.iterrows():
+    for j,x in dev_to_add.iterrows():
         print(f"\r{int(100*i/s)}%", end="")
-        rs.append(MDR(mdr_report_key = x.MDR_REPORT_KEY, device = Device.objects.get(model_number = x.MODEL_NUMBER)))
+        rs.append(MDR(mdr_report_key = x.MDR_REPORT_KEY, device = devices.get(model_number = x.MODEL_NUMBER)))
         i += 1
     MDR.objects.bulk_create(rs)
     print('\rMDRs created')
