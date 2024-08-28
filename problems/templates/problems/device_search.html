@@ -24,9 +24,8 @@
                         {% for match in matches %}
                             <li><a href={% url 'device_info' match.model_number %}>{{ match.model_number }}</a></li>
                             <ul>
-                                <li>{{ match.brand_name }}</li>
-                                <li>{{ match.generic_name }}</li>
-                                <li>{{ match.mnames }}</li>
+                                <li>Brand name: {{ match.brand_name }}</li>
+                                <li>Generic name: {{ match.generic_name }}</li>
                             </ul>
                         {% endfor %}
                     </ul>
