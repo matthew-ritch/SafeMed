@@ -141,16 +141,14 @@ if True:
 if True:
     MDR.objects.all().delete()
     devices = np.array(Device.objects.all().values_list('model_number', flat=True))
-    dev_to_add = dev[np.isin(dev.MODEL_NUMBER, devices)] #so we can skip the filter step
+    dev_to_add = dev[np.isin(dev.MODEL_NUMBER, devices)].reset_index(drop=True) #so we can skip the filter step
     devices = Device.objects.all()
     #mdrs
     rs = []
     s = dev_to_add.shape[0]
-    i = 0
-    for j,x in dev_to_add.iterrows():
+    for i, x in dev_to_add.iterrows():
         print(f"\r{int(100*i/s)}%", end="")
         rs.append(MDR(mdr_report_key = x.MDR_REPORT_KEY, device = devices.get(model_number = x.MODEL_NUMBER)))
-        i += 1
     MDR.objects.bulk_create(rs)
     print('\rMDRs created')
 
@@ -183,6 +181,7 @@ if True:
     tos = []
 
     for i, x in dp.iterrows():
+        print(f"\r{int(100*i/s)}%", end="")
         tos.append(MDR.device_problem.through(
             mdr_id=x[0],
             deviceproblem_id=x[1],
