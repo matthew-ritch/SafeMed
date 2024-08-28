@@ -2,6 +2,8 @@
 
 <html>
     
+    <h2>Search for a medical device and click on its link to see its safety history.</h2>
+
     <form action = "/device_search" method="post">
         {% csrf_token %}
         <table>
@@ -12,7 +14,7 @@
                 <td>Manufacturer Name:</td><td><input id="manufacturer_name_search" type="text" name="manufacturer_name_search" value="{{current_manufacturer_name_search}}"></td>
             </tr>
         </table>
-        <input type="submit" valye="Submit">
+        <input type="submit" value="Search">
     </form>
 
     {% if mmatches %}
