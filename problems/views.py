@@ -64,9 +64,16 @@ def device_search(request):
         matches = Device.objects.all().filter(brand_name__contains=request.POST['device_name_search']).order_by('brand_name') | Device.objects.all().filter(generic_name__contains=request.POST['device_name_search']).order_by('brand_name')
         matches = matches & Device.objects.all().filter(manufacturer__name__contains=request.POST['manufacturer_name_search']).order_by('brand_name')
         matches = matches.exclude(model_number__contains="/").distinct()
+        mfrs = []
         for m in matches:
             m.mnames = ', '.join(np.sort(m.manufacturer.all().values_list('name',flat=True)))
-        context['matches'] = matches
+            mfrs.append(m.mnames)
+        mfrs = np.array(mfrs)
+        umfrs = np.unique(mfrs)
+
+        context['mmatches'] = {}
+        for mfr in umfrs:
+            context['mmatches'][mfr] = [matches[int(i)] for i in np.arange(len(matches))[mfrs == mfr]]
 
         context['current_device_name_search'] = request.POST['device_name_search']
         context['current_manufacturer_name_search'] = request.POST['manufacturer_name_search']

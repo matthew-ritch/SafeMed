@@ -15,10 +15,9 @@
         <input type="submit" valye="Submit">
     </form>
 
-    {% if matches %}
-        {% regroup matches by mnames as mmatches %}
+    {% if mmatches %}
             <ul>
-                {% for mname, matches in mmatches %}
+                {% for mname, matches in mmatches.items %}
                     <li>{{mname}}</li>
                     <ul>
                         {% for match in matches %}
