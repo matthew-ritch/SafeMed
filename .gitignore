@@ -8,3 +8,4 @@ db.sqlite3
 *.pyc
 *.DS_Store
 *.zip
+notes.txt
