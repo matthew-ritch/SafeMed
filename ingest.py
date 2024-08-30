@@ -13,8 +13,18 @@ if True:
     #device
     with codecs.open('data/DEVICE.txt', 'r', encoding='utf-8', errors='ignore') as f:
         dev = pd.read_csv(f, delimiter='|')
-
-
+    dev['MANUFACTURER_D_NAME'] = dev['MANUFACTURER_D_NAME'].str.replace('[.,]|INC|LLC|LTD(?!O)','', regex=True).str.strip()
+    #manufacturer groupings (manually defined in this csv)
+    mg = pd.read_csv('data/manufacturers.csv')
+    maps = mg[~pd.isna(mg['Group'])]
+    maps['Group'] = maps['Group'].str.lower()
+    for gr, dfg in maps.groupby('Group'):
+        m = np.isin(dev['MANUFACTURER_D_NAME'], dfg.MANUFACTURER)
+        if not any(m): continue
+        t = dev[m]
+        values, counts = np.unique(t['MANUFACTURER_D_NAME'], return_counts=True)
+        dev.loc[m, 'MANUFACTURER_D_NAME'] = values[np.argmax(counts)]
+    
     #if there are multiple brand names under a product number, take the most common
     dev['n'] = 1
     name_frequencies = dev[~(dev.MODEL_NUMBER == 'nan')].groupby(['MODEL_NUMBER', 'BRAND_NAME'], as_index=False).count()
@@ -73,7 +83,6 @@ if True:
     dev['BRAND_NAME'][pd.isna(dev['BRAND_NAME'])] = dev['GENERIC_NAME'][pd.isna(dev['BRAND_NAME'])]
 
     #other cleaning
-    dev['MANUFACTURER_D_NAME'] = dev['MANUFACTURER_D_NAME'].str.replace('[.,]|INC|LLC|LTD(?!O)','', regex=True).str.strip()
     dev = dev[dev.MDR_REPORT_KEY.astype(str).str.isnumeric()]
     dev = dev.drop_duplicates(subset='MDR_REPORT_KEY')
 
