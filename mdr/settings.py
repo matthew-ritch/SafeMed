@@ -30,6 +30,11 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 
+#
+if os.getenv('PROD') == 'True':
+    DEBUG = False
+    SECURE_SSL_REDIRECT = True
+    CRSF_TRUSTED_ORIGINS = ["https://safemed.xyz"]
 
 # Application definition
 
