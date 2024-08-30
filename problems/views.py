@@ -1,14 +1,16 @@
 from django.shortcuts import render
 from django.http import JsonResponse
 from problems.models import Manufacturer, Device, MDR, DeviceProblem, PatientProblem
-
 from django.db.models import Count
 
 import numpy as np
+import logging
+
+logger = logging.getLogger(__name__)
+logging.basicConfig(filename='myapp.log', level=logging.INFO)
 
 def list_manufacturers(request):
     context = {}
-    
     ms = Manufacturer.objects.all().order_by('name')
     for m in ms:
         devices = m.device_set.all().annotate(count=Count('mdr')).filter(count__gte=1)
@@ -46,17 +48,9 @@ def device_info(request, mn):
         these = mdrs.filter(device_problem = dp)
         context['device_problems'][dp.description] = these.__len__()
 
+    logger.info(f'Device Info / {request.POST['mn']}')
+
     return JsonResponse(context)
-
-def manufacturer_search(request):
-    context = {}
-    if request.method == 'POST':
-        matches = Manufacturer.objects.all().filter(name__contains=request.POST['name_search']).order_by('name')
-        matches = matches.annotate(n_devices=Count('device')).filter(n_devices__gte=1).distinct()
-        context['matches'] = matches
-        print(context)
-
-    return render(request, 'problems/manufacturer_search.html', context)
 
 def device_search(request):
     context = {}
@@ -78,5 +72,7 @@ def device_search(request):
 
         context['current_device_name_search'] = request.POST['device_name_search']
         context['current_manufacturer_name_search'] = request.POST['manufacturer_name_search']
+
+        logger.info(f'Device Search / {request.POST['device_name_search']} / {request.POST['manufacturer_name_search']}')
 
     return render(request, 'problems/device_search.html', context)
