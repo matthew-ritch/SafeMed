@@ -48,7 +48,7 @@ def device_info(request, mn):
         these = mdrs.filter(device_problem = dp)
         context['device_problems'][dp.description] = these.__len__()
 
-    logger.info(f'Device Info / {request.POST['mn']}')
+    logger.info(f'Device Info / {mn}')
 
     return JsonResponse(context)
 
