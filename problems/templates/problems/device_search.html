@@ -1,88 +1,99 @@
 <!DOCTYPE html>
 
 {% load static %}
-<head>
-    <meta charset="utf-8">
-    <title>SafeMed</title>
-    <meta name="twitter:title" content="SafeMed">
-    <meta property="og:title" content="SafeMed">
-    <meta property="og:title" content="SafeMed">
-    <meta property="twitter:title" content="SafeMed">
-    <meta property="twitter:card" content="summary">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="cf-2fa-verify" content="0fab03255b86805">
-    <meta name="description" content="This is the website of SafeMed.">
-    <link rel="shortcut icon" type="image/x-icon" href="https://media.istockphoto.com/id/1435982017/photo/yellow-plus-sign-isolated-on-white-background.jpg?s=1024x1024&w=is&k=20&c=pyrqm1TFGOFjG0vd_lQwPWGb8sOYCdDIJiuHhcJHXIQ=">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&amp;display=swap"
-        rel="stylesheet" data-optimized-fonts="true">
-    <link
-        href="https://fonts.googleapis.com/css2?family=Merriweather:ital,wght@0,300;0,400;0,700;0,900;1,300;1,400;1,700;1,900&amp;display=swap"
-        rel="stylesheet" data-optimized-fonts="true">
-    <link rel="stylesheet"
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&amp;display=swap">
-    <link rel="stylesheet"
-        href="https://fonts.googleapis.com/css2?family=Merriweather:ital,wght@0,300;0,400;0,700;0,900;1,300;1,400;1,700;1,900&amp;display=swap">
-    <link href="{% static 'problems/styles/newstyle.css' %}" rel="stylesheet">
-    <link href="{% static 'problems/styles/font.css' %}" rel="stylesheet">
-    <!-- <link rel="stylesheet" href="https://unpkg.com/mvp.css"> -->
-</head>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>SafeMed</title>
+        <meta name="twitter:title" content="SafeMed">
+        <meta property="og:title" content="SafeMed">
+        <meta property="og:title" content="SafeMed">
+        <meta property="twitter:title" content="SafeMed">
+        <meta property="twitter:card" content="summary">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta name="cf-2fa-verify" content="0fab03255b86805">
+        <meta name="description" content="This is the website of SafeMed.">
+        <link rel="shortcut icon" type="image/x-icon" href="https://media.istockphoto.com/id/1435982017/photo/yellow-plus-sign-isolated-on-white-background.jpg?s=1024x1024&w=is&k=20&c=pyrqm1TFGOFjG0vd_lQwPWGb8sOYCdDIJiuHhcJHXIQ=">
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&amp;display=swap"
+            rel="stylesheet" data-optimized-fonts="true">
+        <link
+            href="https://fonts.googleapis.com/css2?family=Merriweather:ital,wght@0,300;0,400;0,700;0,900;1,300;1,400;1,700;1,900&amp;display=swap"
+            rel="stylesheet" data-optimized-fonts="true">
+        <link rel="stylesheet"
+            href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&amp;display=swap">
+        <link rel="stylesheet"
+            href="https://fonts.googleapis.com/css2?family=Merriweather:ital,wght@0,300;0,400;0,700;0,900;1,300;1,400;1,700;1,900&amp;display=swap">
+        <link rel="stylesheet" href="{% static 'problems/styles/newstyle.css' %}">
+        <link rel="stylesheet" href="{% static 'problems/styles/font.css' %}">
+        <!-- <link type="text/css" href="{% static 'problems/styles/newstyle.css' %}">
+        <link type="text/css" href="{% static 'problems/styles/font.css' %}"> -->
+        <!-- <link rel="stylesheet" href="https://unpkg.com/mvp.css"> -->
+    </head>
 
-<body style="display:block" class="">
-    <div id="__next">
-        <div class="flex flex-col md:py-16">
-            <div class="flex flex-col flex-grow  md:flex-row">
-                <div class="flex flex-row items-center flex-none p-4 gap-2 md:flex-col md:items-start">
-                    <p class="text-2xl font-bold">SafeMed</p>
-                    <a onclick="document.getElementById('manufacturer_name_search').value='abbott';document.getElementById('devsearch').submit();">Abbott</a>
-                    <a onclick="document.getElementById('manufacturer_name_search').value='boston scientific';document.getElementById('devsearch').submit();">Boston Scientific</a>
-                    <a onclick="document.getElementById('manufacturer_name_search').value='medtronic';document.getElementById('devsearch').submit();">Medtronic</a>
-                    <a onclick="document.getElementById('manufacturer_name_search').value='stryker';document.getElementById('devsearch').submit();">Stryker</a>
-                </div>
-                <div class="flex flex-col flex-grow p-4">
-                    <div class="pb-32 mx-auto max-w-screen-sm antialiased prose">
-                        <p><h3>Search and click on a medical device to see its safety history.</h3></p>
-                        <div class="flex w-full justify-center">
-                            <form id = "devsearch" action = "{% url 'device_search' %}" method="post">
-                                {% csrf_token %}
-                                <div class="flex w-full justify-center">
-                                    <table>
-                                        <tr>
-                                            <td>Device Name:</td><td><input id="device_name_search" type="text" name="device_name_search" value="{{current_device_name_search}}"></td>
-                                        </tr>
-                                        <tr>
-                                            <td>Manufacturer Name:</td><td><input id="manufacturer_name_search" type="text" name="manufacturer_name_search" value="{{current_manufacturer_name_search}}"></td>
-                                        </tr>
-                                    </table>
-                                </div>
-                                <div class="flex w-full justify-center">
-                                    <input type="submit" value="Search">
-                                </div>
-                            </form>
-                        </div>
+    <body style="display:block" class="">
+        <div id="__next">
+            <div class="flex flex-col md:py-16">
+                <div class="flex flex-col flex-grow  md:flex-row">
+                    <div class="flex flex-row items-center flex-none p-4 gap-2 md:flex-col md:items-start">
+                        <p class="text-2xl font-bold">SafeMed</p>
+                        <a onclick="document.getElementById('manufacturer_name_search').value='abbott';document.getElementById('devsearch').submit();">Abbott</a>
+                        <a onclick="document.getElementById('manufacturer_name_search').value='boston scientific';document.getElementById('devsearch').submit();">Boston Scientific</a>
+                        <a onclick="document.getElementById('manufacturer_name_search').value='medtronic';document.getElementById('devsearch').submit();">Medtronic</a>
+                        <a onclick="document.getElementById('manufacturer_name_search').value='stryker';document.getElementById('devsearch').submit();">Stryker</a>
                     </div>
-                    
-                    {% if mmatches %}
-                        <div class="flex w-full justify-center pb-32 mx-auto max-w-screen-sm antialiased prose">
-                            
-                                        <ul>
-                                            {% for mname, matches in mmatches.items %}
-                                                <li>{{mname}}</li>
-                                                <ul>
-                                                    {% for match in matches %}
-                                                        <li><a href={% url 'device_info' match.model_number %}>{{ match.brand_name }}</a></li>
-                                                    {% endfor %}
-                                                </ul>
-                                            {% endfor %}
-                                        </ul>
-
+                    <div class="flex flex-col flex-grow p-4">
+                        <div class="pb-32 mx-auto max-w-screen-sm antialiased prose">
+                            <p><h3>Search for a medical device to see its safety history.</h3></p>
+                            <div class="flex w-full justify-center">
+                                <form id = "devsearch" action = "{% url 'device_search' %}" method="post">
+                                    {% csrf_token %}
+                                    <div class="flex w-full justify-center">
+                                        <table>
+                                            <tr>
+                                                <td>Device Name:</td><td><input id="device_name_search" type="text" name="device_name_search" value="{{current_device_name_search}}" onkeypress="if(event.keyCode === 13){document.getElementById('devsearch').submit()}"></td>
+                                            </tr>
+                                            <tr>
+                                                <td>Manufacturer Name:</td><td><input id="manufacturer_name_search" type="text" name="manufacturer_name_search" value="{{current_manufacturer_name_search}}" onkeypress="if(event.keyCode === 13){document.getElementById('devsearch').submit()}"></td>
+                                            </tr>
+                                        </table>
+                                    </div>
+                                   
+                                </form>
+                            </div>
+                            <div class="flex w-full justify-center">
+                                <a onclick=";document.getElementById('devsearch').submit();">Search</a>
+                            </div>
                         </div>
-                    {% endif %}
+                        
+                        {% if POSTED %}
+                            {% if not mmatches %}
+                                <div class="pb-32 mx-auto max-w-screen-sm antialiased prose">
+                                    <p>No Results</p>
+                                </div>
+                            {% endif %}
+                        {% endif %}
+                        {% if mmatches %}
+                            <div class="flex w-full justify-center pb-32 mx-auto max-w-screen-sm antialiased prose">
+                                
+                                            <ul>
+                                                {% for mname, matches in mmatches.items %}
+                                                    <li>{{mname}}</li>
+                                                    <ul>
+                                                        {% for match in matches %}
+                                                            <li><a href={% url 'device_info' match.model_number %}>{{ match.brand_name }}</a></li>
+                                                        {% endfor %}
+                                                    </ul>
+                                                {% endfor %}
+                                            </ul>
+                            </div>
+                        {% endif %}
 
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
-</body>
+    </body>
+</html>

@@ -61,6 +61,7 @@ def manufacturer_search(request):
 def device_search(request):
     context = {}
     if request.method == 'POST':
+        context['POSTED'] = True
         matches = Device.objects.all().filter(brand_name__contains=request.POST['device_name_search']).order_by('brand_name') | Device.objects.all().filter(generic_name__contains=request.POST['device_name_search']).order_by('brand_name')
         matches = matches & Device.objects.all().filter(manufacturer__name__contains=request.POST['manufacturer_name_search']).order_by('brand_name')
         matches = matches.exclude(model_number__contains="/").distinct()
