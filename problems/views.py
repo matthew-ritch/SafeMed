@@ -4,46 +4,50 @@ from problems.models import Manufacturer, Device, MDR, DeviceProblem, PatientPro
 from django.db.models import Count
 
 import numpy as np
+import pandas as pd
 import logging
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(filename='myapp.log', level=logging.INFO)
 
 def device_info(request, mn):
+    logger.info(f'Device Info / {mn}')
     context = {}
     device = Device.objects.get(model_number = mn)
     mdrs = MDR.objects.filter(device = device)
     pps = PatientProblem.objects.filter(mdr__device = device).exclude(description = 'No Clinical Signs, Symptoms or Conditions')
     dps = DeviceProblem.objects.filter(mdr__device = device)
-    
-    context['Manufacturer'] = list(device.manufacturer.all().values_list('name', flat=True))
+    ###
+    context['Manufacturer'] = ', '.join(list(device.manufacturer.all().values_list('name', flat=True)))
     context['BrandName'] = device.brand_name
     context['GenericName'] = device.generic_name
     n_reports = len(mdrs)
     context['n_reports'] = n_reports
-    #TODO
+    ###
+    context['problem_table'] = []
     context['dps'] = []
     for mdr in mdrs:
-        for dp in mdr.device_problem_set:
-            context['dps'].append({'date':mdr.report_date,'problem':dp.description})
-    
+        for dp in mdr.device_problem.all():
+            context['dps'].append({'date':mdr.event_date,'problem':dp.description})
+            context['problem_table'].append({'Date':mdr.event_date,'Problem':dp.description, 'Type':'Device', })
     context['pps'] = []
     for mdr in mdrs:
-        for pp in mdr.patient_problem_set:
-            context['pps'].append({'date':mdr.report_date,'problem':dp.description})
-
-    context['patient_problems'] = {}
-    for pp in pps:
-        these = mdrs.filter(patient_problem = pp)
-        context['patient_problems'][pp.description] = these.__len__()
-    context['device_problems'] = {}
-    for dp in dps:
-        these = mdrs.filter(device_problem = dp)
-        context['device_problems'][dp.description] = these.__len__()
-
-    logger.info(f'Device Info / {mn}')
-
-    return JsonResponse(context)
+        for pp in mdr.patient_problem.all():
+            context['pps'].append({'date':mdr.event_date,'problem':dp.description})
+            context['problem_table'].append({'Date':mdr.event_date,'Problem':pp.description, 'Type':'Patient', })
+    context['problem_table'] = pd.DataFrame(context['problem_table']).sort_values(by='Date').to_html(index=False)
+    ###
+    if len(pps)>0:
+        context['patient_problems'] = {}
+        for pp in pps:
+            these = mdrs.filter(patient_problem = pp)
+            context['patient_problems'][pp.description] = these.__len__()
+    if len(dps)>0:
+        context['device_problems'] = {}
+        for dp in dps:
+            these = mdrs.filter(device_problem = dp)
+            context['device_problems'][dp.description] = these.__len__()
+    return render(request, 'problems/device_info.html', context)
 
 def device_search(request):
     context = {}

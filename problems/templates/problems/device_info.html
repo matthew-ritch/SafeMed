@@ -1,0 +1,33 @@
+{% extends "problems/base.html" %}
+
+{% block content %}
+<form id = "devsearch" action = "{% url 'device_search' %}" method="post">
+    {% csrf_token %}
+    <input id="device_name_search" type="hidden" style="font-size:16.1px" name="device_name_search" value="{{current_device_name_search}}">
+    <input id="manufacturer_name_search" type="hidden" style="font-size:16.1px" name="manufacturer_name_search" value="{{current_manufacturer_name_search}}">
+</form>
+    <div id="__next">
+        <div class="flex flex-col md:py-16">
+            <div class="flex flex-col flex-grow  md:flex-row">
+                    <div class="flex flex-col items-center flex-none p-4 gap-2 md:items-start">
+                        <p class="text-2xl font-bold">SafeMed</p>
+                        <a onclick="document.getElementById('manufacturer_name_search').value='abbott';document.getElementById('devsearch').submit();">Abbott</a>
+                        <a onclick="document.getElementById('manufacturer_name_search').value='boston scientific';document.getElementById('devsearch').submit();">Boston Scientific</a>
+                        <a onclick="document.getElementById('manufacturer_name_search').value='medtronic';document.getElementById('devsearch').submit();">Medtronic</a>
+                        <a onclick="document.getElementById('manufacturer_name_search').value='stryker';document.getElementById('devsearch').submit();">Stryker</a>
+                    </div>
+                <div class="flex items-center flex-col flex-grow p-4">
+                    <div class="pb-32 mx-auto items-center max-w-screen-sm antialiased prose">
+                        <p><h3>{{BrandName}}.</h3></p>
+                    </div>
+                    <div class="pb-32 mx-auto items-center max-w-screen-sm antialiased prose">
+                        <p>This device is manufactured by: {{Manufacturer}}.</p> 
+                        <p>{{n_reports}} total incidents were reported about this device. </p>
+                        <p>Those reports included the following problems:</p>
+                        {{ problem_table | safe }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
