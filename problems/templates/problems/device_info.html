@@ -18,10 +18,11 @@
                     </div>
                 <div class="flex items-center flex-col flex-grow p-4">
                     <div class="pb-16 mx-auto items-center max-w-screen-sm antialiased prose">
-                        <p><h3>{{BrandName}}.</h3></p>
+                        <p><h3>{{BrandName}}</h3></p>
                     </div>
                     <div class="pb-16 mx-auto items-center max-w-screen-sm antialiased prose">
-                        <p>This device is manufactured by: {{Manufacturer}}.</p> 
+                        <p>{{GenericName}}</p>
+                        <p>This device is manufactured by {{Manufacturer}}.</p> 
                         {% if problem_table %}
                             <p>The following problems were reported about this device:</p>
                             {{ problem_table | safe }}
