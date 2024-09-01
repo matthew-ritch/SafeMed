@@ -12,7 +12,7 @@
                         <a onclick="document.getElementById('manufacturer_name_search').value='stryker';document.getElementById('devsearch').submit();">Stryker</a>
                     </div>
                 <div class="flex flex-col flex-grow p-4">
-                    <div class="pb-32 mx-auto max-w-screen-sm antialiased prose">
+                    <div class="pb-16 mx-auto max-w-screen-sm antialiased prose">
                         <p><h3>Search for a medical device to see its safety history.</h3></p>
                         <div class="flex w-full justify-center">
                             <form id = "devsearch" action = "{% url 'device_search' %}" method="post">
@@ -33,28 +33,26 @@
                         <div class="flex w-full justify-center">
                             <a onclick=";document.getElementById('devsearch').submit();">Search</a>
                         </div>
-                    </div>
                     
                     {% if POSTED %}
                         {% if not mmatches %}
-                            <div class="pb-32 mx-auto max-w-screen-sm antialiased prose">
+                            <div class="pb-16 mx-auto max-w-screen-sm antialiased prose">
                                 <p>No Results</p>
                             </div>
                         {% endif %}
                     {% endif %}
                     {% if mmatches %}
-                        <div class="flex w-full justify-center pb-32 mx-auto max-w-screen-sm antialiased prose">
-                            
-                                        <ul>
-                                            {% for mname, matches in mmatches.items %}
-                                                <li>{{mname}}</li>
-                                                <ul>
-                                                    {% for match in matches %}
-                                                        <li><a href={% url 'device_info' match.model_number %}>{{ match.brand_name }}</a></li>
-                                                    {% endfor %}
-                                                </ul>
-                                            {% endfor %}
-                                        </ul>
+                        <div class="flex w-full justify-center pb-16 mx-auto max-w-screen-sm antialiased prose">
+                            <ul>
+                                {% for mname, matches in mmatches.items %}
+                                    <li>{{mname}}</li>
+                                    <ul>
+                                        {% for match in matches %}
+                                            <li><a href={% url 'device_info' match.model_number %}>{{ match.brand_name }}</a></li>
+                                        {% endfor %}
+                                    </ul>
+                                {% endfor %}
+                            </ul>
                         </div>
                     {% endif %}
 
