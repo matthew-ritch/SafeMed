@@ -22,8 +22,12 @@
                     </div>
                     <div class="pb-16 mx-auto items-center max-w-screen-sm antialiased prose">
                         <p>This device is manufactured by: {{Manufacturer}}.</p> 
-                        <p>The following problems were reported about this device:</p>
-                        {{ problem_table | safe }}
+                        {% if problem_table %}
+                            <p>The following problems were reported about this device:</p>
+                            {{ problem_table | safe }}
+                        {% else %}
+                            <p>No problems were reported about this device.</p>
+                        {% endif %}
                     </div>
                 </div>
             </div>
