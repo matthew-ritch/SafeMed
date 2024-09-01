@@ -9,23 +9,6 @@ import logging
 logger = logging.getLogger(__name__)
 logging.basicConfig(filename='myapp.log', level=logging.INFO)
 
-def list_manufacturers(request):
-    context = {}
-    ms = Manufacturer.objects.all().order_by('name')
-    for m in ms:
-        devices = m.device_set.all().annotate(count=Count('mdr')).filter(count__gte=1)
-        if len(devices) > 0:
-            context[m.name] = [{'brand_name':d.brand_name,'generic_name':d.generic_name,'model_number':d.model_number} for d in devices]
-    return JsonResponse(context)
-
-def list_devices(request):
-    context = {}
-    ds = Device.objects.all().order_by('model_number').annotate(count=Count('mdr')).filter(count__gte=1)
-    for d in ds:
-        ms = np.array(d.manufacturer.all().values_list('name',flat=True))
-        context[d.brand_name] = {'brand_name':d.brand_name,'generic_name':d.generic_name,'model_number':d.model_number, 'manufacturers':list(ms)}
-    return JsonResponse(context)
-
 def device_info(request, mn):
     context = {}
     device = Device.objects.get(model_number = mn)
@@ -38,6 +21,16 @@ def device_info(request, mn):
     context['GenericName'] = device.generic_name
     n_reports = len(mdrs)
     context['n_reports'] = n_reports
+    #TODO
+    context['dps'] = []
+    for mdr in mdrs:
+        for dp in mdr.device_problem_set:
+            context['dps'].append({'date':mdr.report_date,'problem':dp.description})
+    
+    context['pps'] = []
+    for mdr in mdrs:
+        for pp in mdr.patient_problem_set:
+            context['pps'].append({'date':mdr.report_date,'problem':dp.description})
 
     context['patient_problems'] = {}
     for pp in pps:

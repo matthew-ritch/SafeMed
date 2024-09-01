@@ -28,3 +28,4 @@ class MDR(models.Model):
     device = models.ForeignKey(Device, on_delete=models.CASCADE)
     patient_problem = models.ManyToManyField(PatientProblem)
     device_problem = models.ManyToManyField(DeviceProblem)
+    event_date = models.DateField()
