@@ -17,13 +17,12 @@
                         <a onclick="document.getElementById('manufacturer_name_search').value='stryker';document.getElementById('devsearch').submit();">Stryker</a>
                     </div>
                 <div class="flex items-center flex-col flex-grow p-4">
-                    <div class="pb-32 mx-auto items-center max-w-screen-sm antialiased prose">
+                    <div class="pb-16 mx-auto items-center max-w-screen-sm antialiased prose">
                         <p><h3>{{BrandName}}.</h3></p>
                     </div>
-                    <div class="pb-32 mx-auto items-center max-w-screen-sm antialiased prose">
+                    <div class="pb-16 mx-auto items-center max-w-screen-sm antialiased prose">
                         <p>This device is manufactured by: {{Manufacturer}}.</p> 
-                        <p>{{n_reports}} total incidents were reported about this device. </p>
-                        <p>Those reports included the following problems:</p>
+                        <p>The following problems were reported about this device:</p>
                         {{ problem_table | safe }}
                     </div>
                 </div>
