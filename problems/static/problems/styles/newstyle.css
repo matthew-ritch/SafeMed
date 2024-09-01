@@ -95,6 +95,11 @@ table {
     border-collapse: collapse
 }
 
+th,
+td {
+    text-align: left;
+}
+
 optgroup,
 select,
 textarea {
