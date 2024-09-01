@@ -28,25 +28,13 @@ def device_info(request, mn):
     context['dps'] = []
     for mdr in mdrs:
         for dp in mdr.device_problem.all():
-            context['dps'].append({'date':mdr.event_date,'problem':dp.description})
             context['problem_table'].append({'Date':mdr.event_date,'Problem':dp.description, 'Type':'Device', })
     context['pps'] = []
     for mdr in mdrs:
         for pp in mdr.patient_problem.all():
-            context['pps'].append({'date':mdr.event_date,'problem':dp.description})
             context['problem_table'].append({'Date':mdr.event_date,'Problem':pp.description, 'Type':'Patient', })
     context['problem_table'] = pd.DataFrame(context['problem_table']).sort_values(by='Date').to_html(index=False)
     ###
-    if len(pps)>0:
-        context['patient_problems'] = {}
-        for pp in pps:
-            these = mdrs.filter(patient_problem = pp)
-            context['patient_problems'][pp.description] = these.__len__()
-    if len(dps)>0:
-        context['device_problems'] = {}
-        for dp in dps:
-            these = mdrs.filter(device_problem = dp)
-            context['device_problems'][dp.description] = these.__len__()
     return render(request, 'problems/device_info.html', context)
 
 def device_search(request):
