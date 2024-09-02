@@ -10,24 +10,27 @@ import codecs
 from problems.models import Manufacturer, Device, MDR, PatientProblem, DeviceProblem
 
 if True:
-    with codecs.open('data/device_cleaned.csv', 'r', encoding='utf-8', errors='ignore') as f:
+    with codecs.open('data/device/device_cleaned.csv', 'r', encoding='utf-8', errors='ignore') as f:
         dev = pd.read_csv(f)
     print('Device file loaded')
 
     # mdrfoi
-    with codecs.open('data/mdrfoi.txt', 'r', encoding='utf-8', errors='ignore') as f:
-        mdr = pd.read_csv(f, delimiter='|')
+    with codecs.open('data/mdr/mdrfoi.txt', 'r', encoding='utf-8', errors='ignore') as f:
+        mdr1 = pd.read_csv(f, delimiter='|', on_bad_lines='skip')
+    with codecs.open('data/mdr/mdrfoiThru2023.txt', 'r', encoding='utf-8', errors='ignore') as f:
+        mdr2 = pd.read_csv(f, delimiter='|', on_bad_lines='skip')
+    mdr = pd.concat([mdr1, mdr2])
 
     print('MDR and DEVICES Loaded')
 
 if True:
-    with codecs.open('data/patientproblemcode.txt', 'r', encoding='utf-8', errors='ignore') as f:
+    with codecs.open('data/problemCodes/patientproblemcode.txt', 'r', encoding='utf-8', errors='ignore') as f:
             pp = pd.read_csv(f, delimiter='|')
-    with codecs.open('data/patientproblemcodes.csv', 'r', encoding='utf-8', errors='ignore') as f:
+    with codecs.open('data/problemCodes/patientproblemcodes.csv', 'r', encoding='utf-8', errors='ignore') as f:
         ppc = pd.read_csv(f, delimiter=',', header=None)
-    with codecs.open('data/foidevproblem.txt', 'r', encoding='utf-8', errors='ignore') as f:
+    with codecs.open('data/problemCodes/foidevproblem.txt', 'r', encoding='utf-8', errors='ignore') as f:
             dp = pd.read_csv(f, delimiter='|', header=None)
-    with codecs.open('data/deviceproblemcodes.csv', 'r', encoding='utf-8', errors='ignore') as f:
+    with codecs.open('data/problemCodes/deviceproblemcodes.csv', 'r', encoding='utf-8', errors='ignore') as f:
         dpc = pd.read_csv(f, delimiter=',', header=None)
 
     pp = pp.drop_duplicates(subset = ['MDR_REPORT_KEY','PROBLEM_CODE'])
@@ -86,11 +89,12 @@ if True:
     devices = Device.objects.all()
     #mdrs
     # datefields joined[['DATE_RECEIVED', 'DATE_REPORT', 'DATE_OF_EVENT']]
+    event_type_map = {'D':'Death','IN':'Injury','N':'Injury','IL':'Injury','IJ':'Injury','M':'Malfunction','O':'Other'}
     rs = []
     s = dev_to_add.shape[0]
     for i, x in dev_to_add.iterrows():
         print(f"\r{int(100*i/s)}%", end="")
-        rs.append(MDR(mdr_report_key = x.MDR_REPORT_KEY, device = devices.get(model_number = x.MODEL_NUMBER), event_date = pd.to_datetime(x.DATE_OF_EVENT, utc=True) ))
+        rs.append(MDR(mdr_report_key = x.MDR_REPORT_KEY, device = devices.get(model_number = x.MODEL_NUMBER), event_type = event_type_map[x.EVENT_TYPE], event_date = pd.to_datetime(x.DATE_OF_EVENT, utc=True) ))
     MDR.objects.bulk_create(rs)
     print('\rMDRs created')
 

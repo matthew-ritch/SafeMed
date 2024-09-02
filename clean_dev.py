@@ -1,10 +1,16 @@
 import numpy as np
 import pandas as pd
 import codecs
+import glob
 
 #device
-with codecs.open('data/DEVICE.txt', 'r', encoding='utf-8', errors='ignore') as f:
-    dev = pd.read_csv(f, delimiter='|')
+devfiles = glob.glob('data/device/DEVICE*.txt')
+devs = []
+for dfile in devfiles:
+    with codecs.open('data/device/DEVICE.txt', 'r', encoding='utf-8', errors='ignore') as f:
+        devs.append(pd.read_csv(f, delimiter='|', on_bad_lines='skip'))
+dev = pd.concat(devs)
+
 print('Device file loaded')
 
 dev['MANUFACTURER_D_NAME'] = dev['MANUFACTURER_D_NAME'].str.replace('[.,]|INC|LLC|LTD(?!O)','', regex=True).str.strip()
@@ -12,7 +18,7 @@ dev['BRAND_NAME'] = dev['BRAND_NAME'].str.replace('UNK_|UNKNOWN|UNKNOWN_','', re
 dev = dev[~(dev.BRAND_NAME == '')]
 
 #manufacturer groupings (manually defined in this csv)
-mg = pd.read_csv('data/manufacturers.csv')
+mg = pd.read_csv('data/device/manufacturers.csv')
 maps = mg[~pd.isna(mg['Group'])]
 maps['Group'] = maps['Group'].str.lower()
 for gr, dfg in maps.groupby('Group'):
@@ -30,14 +36,19 @@ name_frequencies = dev[~(pd.isna(dev.MANUFACTURER_D_NAME))].groupby(['MODEL_NUMB
 n_distinct = name_frequencies.groupby('MODEL_NUMBER').agg(lambda x: len(np.unique(x)))
 dev_w_nans = dev[pd.isna(dev.MANUFACTURER_D_NAME)]
 mn_bn_map = name_frequencies.sort_values(by='n', ascending=False).groupby('MODEL_NUMBER').first()['MANUFACTURER_D_NAME'].to_dict()
-dev['MANUFACTURER_D_NAME'] = [mn_bn_map[x.MODEL_NUMBER] if pd.isna(x.MANUFACTURER_D_NAME) and (x.MODEL_NUMBER in mn_bn_map.keys()) else x.MANUFACTURER_D_NAME for i, x in dev.iterrows()]
+# dev['MANUFACTURER_D_NAME'] = [mn_bn_map[x.MODEL_NUMBER] if pd.isna(x.MANUFACTURER_D_NAME) and (x.MODEL_NUMBER in mn_bn_map.keys()) else x.MANUFACTURER_D_NAME for i, x in dev.iterrows()]
+m = pd.isna(dev.MANUFACTURER_D_NAME) 
+dev.loc[m, 'MANUFACTURER_D_NAME'] = dev.loc[m, 'MODEL_NUMBER'].replace(mn_bn_map)
 #2
 dev['n'] = 1
 name_frequencies = dev[~(pd.isna(dev.MANUFACTURER_D_NAME))].groupby(['BRAND_NAME', 'MANUFACTURER_D_NAME'], as_index=False).count()
 n_distinct = name_frequencies.groupby('BRAND_NAME').agg(lambda x: len(np.unique(x)))
 dev_w_nans = dev[pd.isna(dev.MANUFACTURER_D_NAME)]
 mn_bn_map = name_frequencies.sort_values(by='n', ascending=False).groupby('BRAND_NAME').first()['MANUFACTURER_D_NAME'].to_dict()
-dev['MANUFACTURER_D_NAME'] = [mn_bn_map[x.BRAND_NAME] if pd.isna(x.MANUFACTURER_D_NAME) and (x.BRAND_NAME in mn_bn_map.keys()) else x.MANUFACTURER_D_NAME for i, x in dev.iterrows()]
+# dev['MANUFACTURER_D_NAME'] = [mn_bn_map[x.BRAND_NAME] if pd.isna(x.MANUFACTURER_D_NAME) and (x.BRAND_NAME in mn_bn_map.keys()) else x.MANUFACTURER_D_NAME for i, x in dev.iterrows()]
+m = pd.isna(dev.MANUFACTURER_D_NAME) 
+dev.loc[m, 'MANUFACTURER_D_NAME'] = dev.loc[m, 'BRAND_NAME'].replace(mn_bn_map)
+
 print('Nan manufacturers interpolated')
 
 #if there are multiple brand names under a product number, take the most common
@@ -47,6 +58,13 @@ n_distinct = name_frequencies.groupby('MODEL_NUMBER').agg(lambda x: len(np.uniqu
 mns_with_multiple = n_distinct[n_distinct['BRAND_NAME']>1]
 mn_bn_map = name_frequencies.sort_values(by='n', ascending=False).groupby('MODEL_NUMBER').first()['BRAND_NAME'][mns_with_multiple.index].to_dict()
 dev['BRAND_NAME'] = [mn_bn_map[x.MODEL_NUMBER] if x.MODEL_NUMBER in mn_bn_map.keys() else x.BRAND_NAME for i, x in dev.iterrows()]
+dev.loc[m, 'BRAND_NAME'] = dev.loc[m, 'MODEL_NUMBER'].replace(mn_bn_map)
+# m = np.isin(dev.MODEL_NUMBER, list(mn_bn_map.keys()))
+# m = dev.MODEL_NUMBER.isin(mn_bn_map.keys())
+# rep = dev['MODEL_NUMBER'].replace(mn_bn_map)
+# where =  ~(dev['MODEL_NUMBER'] == rep)
+# dev.loc[where, 'BRAND_NAME'] = rep[where]
+
 print('Brand names harmonized')
 
 #if there are multiple generic names under a product number, take the most common
@@ -56,6 +74,9 @@ n_distinct = name_frequencies.groupby('MODEL_NUMBER')['GENERIC_NAME'].agg([lambd
 mns_with_multiple = n_distinct[n_distinct['<lambda_0>']>1]
 mn_bn_map = name_frequencies.sort_values(by='n', ascending=False).groupby('MODEL_NUMBER').first()['GENERIC_NAME'][mns_with_multiple.index].to_dict()
 dev['GENERIC_NAME'] = [mn_bn_map[x.MODEL_NUMBER] if x.MODEL_NUMBER in mn_bn_map.keys() else x.GENERIC_NAME for i, x in dev.iterrows()]
+# m = np.isin(dev.MODEL_NUMBER, mn_bn_map.keys())
+# dev.loc[m, 'GENERIC_NAME'] = dev.loc[m, 'MODEL_NUMBER'].replace(mn_bn_map)
+
 print('Generic names harmonized')
 
 #if there are multiple product numbers for one manufacturer and brand name, take the most common
@@ -65,6 +86,9 @@ n_distinct = name_frequencies.groupby(['BRAND_NAME', 'MANUFACTURER_D_NAME'])['MO
 mns_with_multiple = n_distinct[n_distinct['<lambda_0>']>1]
 mn_bn_map = name_frequencies.sort_values(by='n', ascending=False).groupby(['BRAND_NAME', 'MANUFACTURER_D_NAME']).first()['MODEL_NUMBER'][mns_with_multiple.index].to_dict()
 dev['MODEL_NUMBER'] = [mn_bn_map[tuple(x[['BRAND_NAME', 'MANUFACTURER_D_NAME']].values)] if tuple(x[['BRAND_NAME', 'MANUFACTURER_D_NAME']].values) in mn_bn_map.keys() else x.MODEL_NUMBER for i, x in dev.iterrows()]
+# m = np.isin(XXX, mn_bn_map.keys())
+# dev.loc[m, 'MODEL_NUMBER'] = dev.loc[m, XXX].replace(mn_bn_map)
+
 print('Product numbers harmonized')
 
 #for nan model numbers, take mn from most common matching brand name from same manufacturer
@@ -73,6 +97,7 @@ dev['n'] = 1
 name_frequencies = dev.groupby(['MODEL_NUMBER', 'BRAND_NAME', 'MANUFACTURER_D_NAME'], as_index=False).count()
 mn_bn_map = name_frequencies.sort_values(by='n', ascending=False).groupby(['BRAND_NAME', 'MANUFACTURER_D_NAME']).first()['MODEL_NUMBER'].to_dict()
 dev['MODEL_NUMBER'] = [mn_bn_map[tuple(x[['BRAND_NAME', 'MANUFACTURER_D_NAME']].values)] if (pd.isna(x.MODEL_NUMBER)) and (tuple(x[['BRAND_NAME', 'MANUFACTURER_D_NAME']].values) in mn_bn_map.keys()) else x.MODEL_NUMBER for i, x in dev.iterrows()]
+
 print('Nan model numbers interpolated')
 
 #for devices that are still na model numbers but have mfrs and brand names, make them new mns
@@ -90,7 +115,10 @@ name_frequencies = dev[~(dev.MODEL_NUMBER == 'nan')].groupby(['MODEL_NUMBER', 'B
 n_distinct = name_frequencies.groupby('MODEL_NUMBER').agg(lambda x: len(np.unique(x)))
 mns_with_multiple = n_distinct[n_distinct['BRAND_NAME']>1]
 mn_bn_map = name_frequencies.sort_values(by='n', ascending=False).groupby('MODEL_NUMBER').first()['BRAND_NAME'][mns_with_multiple.index].to_dict()
-dev['BRAND_NAME'] = [mn_bn_map[x.MODEL_NUMBER] if x.MODEL_NUMBER in mn_bn_map.keys() else x.BRAND_NAME for i, x in dev.iterrows()]
+# dev['BRAND_NAME'] = [mn_bn_map[x.MODEL_NUMBER] if x.MODEL_NUMBER in mn_bn_map.keys() else x.BRAND_NAME for i, x in dev.iterrows()]
+m = np.isin(x.MODEL_NUMBER, mn_bn_map.keys())
+dev.loc[m, 'BRAND_NAME'] = dev.loc[m, 'MODEL_NUMBER'].replace(mn_bn_map)
+
 print('Brand names harmonized again')
 
 #if there are multiple pns for same bn / mfr, take most common pn
@@ -100,6 +128,7 @@ n_distinct = name_frequencies.groupby(['BRAND_NAME', 'MANUFACTURER_D_NAME']).agg
 mns_with_multiple = n_distinct[n_distinct['MODEL_NUMBER']>1]
 mn_bn_map = name_frequencies.sort_values(by='n', ascending=False).groupby(['BRAND_NAME', 'MANUFACTURER_D_NAME']).first()['MODEL_NUMBER'][mns_with_multiple.index].to_dict()
 dev['MODEL_NUMBER'] = [mn_bn_map[tuple(x[['BRAND_NAME', 'MANUFACTURER_D_NAME']].values)] if tuple(x[['BRAND_NAME', 'MANUFACTURER_D_NAME']].values) in mn_bn_map.keys() else x.MODEL_NUMBER for i, x in dev.iterrows()]
+
 print('Repeat BN/MFR harmonized')
 
 #check
@@ -107,4 +136,4 @@ print('Repeat BN/MFR harmonized')
 # x = n_brand_names[n_brand_names['<lambda_0>']>1]
 # print(f'check: {n_brand_names['<lambda_0>'].max()} == 1')
 
-dev.to_csv('data/device_cleaned.csv')
+dev.to_csv('data/device/device_cleaned.csv')

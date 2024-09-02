@@ -29,12 +29,12 @@ def device_info(request, mn):
         context['dps'] = []
         for mdr in mdrs:
             for dp in mdr.device_problem.all():
-                context['problem_table'].append({'Date':mdr.event_date,'Problem':dp.description, 'Type':'Device', })
+                context['problem_table'].append({'Date':mdr.event_date,'Event Type':mdr.event_type, 'Problem':dp.description, 'Problem Type':'Device', })
         context['pps'] = []
         for mdr in mdrs:
             for pp in mdr.patient_problem.all():
-                context['problem_table'].append({'Date':mdr.event_date,'Problem':pp.description, 'Type':'Patient', })
-        context['problem_table'] = pd.DataFrame(context['problem_table']).sort_values(by='Date').to_html(index=False)
+                context['problem_table'].append({'Date':mdr.event_date,'Event Type':mdr.event_type, 'Problem':pp.description, 'Problem Type':'Patient', })
+        context['problem_table'] = pd.DataFrame(context['problem_table']).sort_values(by='Date', ascending=False).to_html(index=False)
     ###
     return render(request, 'problems/device_info.html', context)
 

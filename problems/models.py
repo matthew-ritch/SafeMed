@@ -29,3 +29,4 @@ class MDR(models.Model):
     patient_problem = models.ManyToManyField(PatientProblem)
     device_problem = models.ManyToManyField(DeviceProblem)
     event_date = models.DateField()
+    event_type = models.CharField(max_length=200)
