@@ -24,16 +24,12 @@ def device_info(request, mn):
     n_reports = len(mdrs)
     context['n_reports'] = n_reports
     ###
-    if len(pps) > 0 or len(dps) > 0:
+    if len(mdrs)>0:
         context['problem_table'] = []
-        context['dps'] = []
         for mdr in mdrs:
-            for dp in mdr.device_problem.all():
-                context['problem_table'].append({'Date':mdr.event_date,'Event Type':mdr.event_type, 'Problem':dp.description, 'Problem Type':'Device', })
-        context['pps'] = []
-        for mdr in mdrs:
-            for pp in mdr.patient_problem.all():
-                context['problem_table'].append({'Date':mdr.event_date,'Event Type':mdr.event_type, 'Problem':pp.description, 'Problem Type':'Patient', })
+            patient_problems = ', '.join(mdr.patient_problem.all().values_list('description',flat=True))
+            device_problems = ', '.join(mdr.device_problem.all().values_list('description',flat=True))
+            context['problem_table'].append({'Date':mdr.event_date,'Event Type':mdr.event_type, 'Patient Problem':patient_problems if len(patient_problems)>0 else 'None', 'Device Problem':device_problems if len(device_problems)>0 else 'None', })
         context['problem_table'] = pd.DataFrame(context['problem_table']).sort_values(by='Date', ascending=False).to_html(index=False)
     ###
     return render(request, 'problems/device_info.html', context)
