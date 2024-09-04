@@ -11,14 +11,14 @@ from problems.models import Manufacturer, Device, MDR, PatientProblem, DevicePro
 
 if True:
     with codecs.open('data/device/device_cleaned.csv', 'r', encoding='utf-8', errors='ignore') as f:
-        dev = pd.read_csv(f)
+        dev = pd.read_csv(f, usecols = ['MODEL_NUMBER','MANUFACTURER_D_NAME','MDR_REPORT_KEY','BRAND_NAME','GENERIC_NAME'] )#, dtype={'MODEL_NUMBER':str,'MANUFACTURER_D_NAME':str,'MDR_REPORT_KEY':int,'BRAND_NAME':str,'GENERIC_NAME':str})
     print('Device file loaded')
 
     # mdrfoi
     with codecs.open('data/mdr/mdrfoi.txt', 'r', encoding='utf-8', errors='ignore') as f:
-        mdr1 = pd.read_csv(f, delimiter='|', on_bad_lines='skip')
+        mdr1 = pd.read_csv(f, delimiter='|', on_bad_lines='skip', usecols=['DATE_RECEIVED', 'DATE_REPORT', 'DATE_OF_EVENT','MDR_REPORT_KEY','EVENT_TYPE'])#, dtype={'DATE_RECEIVED':str, 'DATE_REPORT':str, 'DATE_OF_EVENT':str,'MDR_REPORT_KEY':str,'EVENT_TYPE':str})
     with codecs.open('data/mdr/mdrfoiThru2023.txt', 'r', encoding='utf-8', errors='ignore') as f:
-        mdr2 = pd.read_csv(f, delimiter='|', on_bad_lines='skip')
+        mdr2 = pd.read_csv(f, delimiter='|', on_bad_lines='skip', usecols=['DATE_RECEIVED', 'DATE_REPORT', 'DATE_OF_EVENT','MDR_REPORT_KEY','EVENT_TYPE'])#, dtype={'DATE_RECEIVED':str, 'DATE_REPORT':str, 'DATE_OF_EVENT':str,'MDR_REPORT_KEY':str,'EVENT_TYPE':str})
     mdr = pd.concat([mdr1, mdr2])
 
     print('MDR and DEVICES Loaded')
@@ -52,7 +52,7 @@ if True:
     s = dev.drop_duplicates(subset=['MODEL_NUMBER','MANUFACTURER_D_NAME'])['MODEL_NUMBER'].shape[0]
     ind = 0
     for mn, X in ddf:
-        print(f"\r{int(100*ind/s)}%", end="")
+        print(f"\rIngesting devices: {int(100*ind/s)}%", end="")
         x = X.iloc[0]
         d = Device.objects.create(model_number = x.MODEL_NUMBER, generic_name = x.GENERIC_NAME, brand_name = x.BRAND_NAME)
         d.save()
@@ -60,7 +60,7 @@ if True:
             x = X.iloc[i]
             d.manufacturer.add(Manufacturer.objects.get(name = x.MANUFACTURER_D_NAME))
         ind += 1
-    print('\rDevices Ingested')
+    print('\rDevices Ingested        ')
 
 if True:
     PatientProblem.objects.all().delete()
@@ -81,20 +81,37 @@ if True:
 if True:
     mdr.loc[pd.isna(mdr.DATE_REPORT), 'DATE_REPORT'] = mdr.loc[pd.isna(mdr.DATE_REPORT), 'DATE_RECEIVED']
     mdr.loc[pd.isna(mdr.DATE_OF_EVENT), 'DATE_OF_EVENT'] = mdr.loc[pd.isna(mdr.DATE_OF_EVENT), 'DATE_REPORT']
+    print('Merging dev and mdr')
     joined = dev.merge(mdr, how='inner', on='MDR_REPORT_KEY', )
     joined = joined[~pd.isna(joined['DATE_OF_EVENT'])]
-    MDR.objects.all().delete()
+    #only add new mdrs
+    print('Only add new mdrs')
+    current_mdrs = MDR.objects.all().values_list('mdr_report_key')
+    m = np.isin(joined.MDR_REPORT_KEY, current_mdrs)
+    joined = joined[~m].reset_index(drop=True)
+    # print('Only add mdrs for which we have a device')
     devices = np.array(Device.objects.all().values_list('model_number', flat=True))
-    dev_to_add = joined[np.isin(joined.MODEL_NUMBER, devices)].reset_index(drop=True) #so we can skip the filter step
+    # dev_to_add = joined[np.isin(joined.MODEL_NUMBER, devices)].reset_index(drop=True) #so we can skip the filter step
     devices = Device.objects.all()
     #mdrs
     # datefields joined[['DATE_RECEIVED', 'DATE_REPORT', 'DATE_OF_EVENT']]
-    event_type_map = {'D':'Death','IN':'Injury','N':'Injury','IL':'Injury','IJ':'Injury','M':'Malfunction','O':'Other'}
+    event_type_map = {'D':'Death','IN':'Injury','N':'Injury','IL':'Injury','IJ':'Injury','M':'Malfunction','O':'Other','*':'Unknown'}
+    for et in joined.EVENT_TYPE.unique(): #TODO do we need this?
+        if et in list(event_type_map.keys()): 
+            continue
+        event_type_map[et] = 'Unknown'
     rs = []
-    s = dev_to_add.shape[0]
-    for i, x in dev_to_add.iterrows():
-        print(f"\r{int(100*i/s)}%", end="")
-        rs.append(MDR(mdr_report_key = x.MDR_REPORT_KEY, device = devices.get(model_number = x.MODEL_NUMBER), event_type = event_type_map[x.EVENT_TYPE], event_date = pd.to_datetime(x.DATE_OF_EVENT, utc=True) ))
+    s = joined.shape[0]
+    print('Begin MDR ingest')
+    for i, x in joined.iterrows():
+        if i%10000 == 0: 
+            print(f"\rIngesting MDRs: {int(100*i/s)}%", end="")
+            MDR.objects.bulk_create(rs)
+            rs = []
+        try:
+            rs.append(MDR(mdr_report_key = x.MDR_REPORT_KEY, device = devices.get(model_number = x.MODEL_NUMBER), event_type = event_type_map[x.EVENT_TYPE], event_date = pd.to_datetime(x.DATE_OF_EVENT, utc=True) ))
+        except:
+            pass
     MDR.objects.bulk_create(rs)
     print('\rMDRs created')
 
@@ -107,7 +124,7 @@ if True:
     s = pp.shape[0]
     tos = []
     for i, x in pp.iterrows():
-        print(f"\r{int(100*i/s)}%", end="")
+        print(f"\rIngesting patient problems:{int(100*i/s)}%", end="")
         tos.append(MDR.patient_problem.through(
                 mdr_id=x.MDR_REPORT_KEY,
                 patientproblem_id=x.PROBLEM_CODE,
@@ -127,7 +144,7 @@ if True:
     tos = []
 
     for i, x in dp.iterrows():
-        print(f"\r{int(100*i/s)}%", end="")
+        print(f"\rIngesting device problems: {int(100*i/s)}%", end="")
         tos.append(MDR.device_problem.through(
             mdr_id=x[0],
             deviceproblem_id=x[1],
