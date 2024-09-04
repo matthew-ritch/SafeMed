@@ -89,6 +89,7 @@ if True:
     current_mdrs = MDR.objects.all().values_list('mdr_report_key')
     m = np.isin(joined.MDR_REPORT_KEY, current_mdrs)
     joined = joined[~m].reset_index(drop=True)
+    joined = joined.drop_duplicates('MDR_REPORT_KEY')
     # print('Only add mdrs for which we have a device')
     devices = np.array(Device.objects.all().values_list('model_number', flat=True))
     # dev_to_add = joined[np.isin(joined.MODEL_NUMBER, devices)].reset_index(drop=True) #so we can skip the filter step
@@ -104,8 +105,9 @@ if True:
     s = joined.shape[0]
     print('Begin MDR ingest')
     for i, x in joined.iterrows():
-        if i%10000 == 0: 
+        if i%1000 == 0: 
             print(f"\rIngesting MDRs: {int(100*i/s)}%", end="")
+        if i%100000 == 0: 
             MDR.objects.bulk_create(rs)
             rs = []
         try:
@@ -113,7 +115,7 @@ if True:
         except:
             pass
     MDR.objects.bulk_create(rs)
-    print('\rMDRs created')
+    print('\rMDRs created              ')
 
 if True:
     MDR.patient_problem.through.objects.all().delete()
@@ -131,7 +133,7 @@ if True:
             ))
 
     MDR.patient_problem.through.objects.bulk_create(tos)
-    print('\rPatient Problems linked')
+    print('\rPatient Problems linked          ')
 
 if True:
     MDR.device_problem.through.objects.all().delete()
@@ -151,4 +153,4 @@ if True:
         ))
 
     MDR.device_problem.through.objects.bulk_create(tos)
-    print('\rDevice Problems linked')
+    print('\rDevice Problems linked            ')

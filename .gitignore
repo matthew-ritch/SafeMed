@@ -4,6 +4,7 @@
 data
 a.py
 db.sqlite3
+db*
 myapp.log
 
 *.pyc

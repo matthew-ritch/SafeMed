@@ -40,11 +40,16 @@ def device_search(request):
         context['POSTED'] = True
         matches = Device.objects.all().filter(brand_name__contains=request.POST['device_name_search']).order_by('brand_name') | Device.objects.all().filter(generic_name__contains=request.POST['device_name_search']).order_by('brand_name')
         matches = matches & Device.objects.all().filter(manufacturer__name__contains=request.POST['manufacturer_name_search']).order_by('brand_name')
+        matches = matches.annotate(co = Count('manufacturer')).filter(co__lte = 5)
         matches = matches.exclude(model_number__contains="/").distinct()
         matches = matches[:1000] #TODO make pages of results. currently empty searches crash
         mfrs = []
         for m in matches:
-            m.mnames = ', '.join(np.sort(m.manufacturer.all().values_list('name',flat=True)))
+            mms = np.sort(m.manufacturer.all().values_list('name',flat=True))
+            if len(mms) > 5:
+                m.mnames = ', '.join(mms[:5]) + ' and others'
+            else:
+                m.mnames = ', '.join(mms)
             mfrs.append(m.mnames)
         mfrs = np.array(mfrs)
         umfrs = np.unique(mfrs)
