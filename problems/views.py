@@ -55,7 +55,7 @@ def device_info(request, mn):
                 xaxis_title = 'Month',
                 yaxis_title = f'{p[et]}',
                 template = 'plotly_white')
-            plots[et] = pyo.plot(fig, include_plotlyjs='cdn', output_type='div')
+            plots[et] = pyo.plot(fig, include_plotlyjs='cdn', output_type='div',config={'autosizable':True})
         context['plots'] = plots
         
 
