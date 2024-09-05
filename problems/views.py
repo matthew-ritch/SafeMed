@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 import logging
 import plotly.graph_objects as go
-import plotly.offline as pyo
+import plotly.io as pio
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(filename='myapp.log', level=logging.INFO)
@@ -34,7 +34,7 @@ def device_info(request, mn):
             context['problem_table'].append({'Date':mdr.event_date,'Event Type':mdr.event_type, 'Patient Problem':patient_problems if len(patient_problems)>0 else 'None', 'Device Problem':device_problems if len(device_problems)>0 else 'None', })
         context['problem_table'] = pd.DataFrame(context['problem_table']).sort_values(by='Date', ascending=False).to_html(index=False)
     ### agg for problem type by year
-    if len(mdrs)>0:
+    if len(mdrs)>4:
         df = pd.DataFrame.from_records(mdrs.values())
         df = df[pd.to_datetime(df.event_date)>pd.to_datetime('1/01/2009')]
         df['mo'] = df['event_date'].to_numpy().astype('datetime64[M]')
@@ -55,7 +55,7 @@ def device_info(request, mn):
                 xaxis_title = 'Month',
                 yaxis_title = f'{p[et]}',
                 template = 'plotly_white')
-            plots[et] = pyo.plot(fig, include_plotlyjs='cdn', output_type='div',config={'autosizable':True})
+            plots[et] = pio.to_html(fig, include_plotlyjs='cdn', full_html=False, default_width='100%', default_height='100%',)
         context['plots'] = plots
         
 
