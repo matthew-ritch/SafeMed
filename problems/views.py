@@ -54,7 +54,8 @@ def device_info(request, mn):
                 title=f'{p[et]} by Month',
                 xaxis_title = 'Month',
                 yaxis_title = f'{p[et]}',
-                template = 'plotly_white')
+                template = 'plotly_white',
+                width=400, height=400)
             plots[et] = pio.to_html(fig, include_plotlyjs='cdn', full_html=False, default_width='100%', default_height='100%',)
         context['plots'] = plots
         
