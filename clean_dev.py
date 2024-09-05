@@ -16,9 +16,10 @@ dev = pd.concat(devs)
 
 print('Device file loaded')
 
-dev['MANUFACTURER_D_NAME'] = dev['MANUFACTURER_D_NAME'].str.replace('[.,]|INC|LLC|LTD(?!O)','', regex=True).str.strip()
-dev['BRAND_NAME'] = dev['BRAND_NAME'].str.replace('UNK_|UNKNOWN|UNKNOWN_','', regex=True).str.strip(' ,._-/')
+dev['MANUFACTURER_D_NAME'] = dev['MANUFACTURER_D_NAME'].str.replace('[.,]|INC|LLC|LTD(?!O)','', regex=True).str.strip(' ,._-/*')
+dev['BRAND_NAME'] = dev['BRAND_NAME'].str.replace('UNK_|UNKNOWN|UNKNOWN_','', regex=True).str.strip(' ,._-/*[]()')
 dev = dev[~(dev.BRAND_NAME == '')]
+dev = dev[~(dev.MANUFACTURER_D_NAME == '')]
 
 #manufacturer groupings (manually defined in this csv)
 mg = pd.read_csv('data/device/manufacturers.csv')
