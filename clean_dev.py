@@ -19,18 +19,16 @@ print('Device file loaded')
 dev['MANUFACTURER_D_NAME'] = dev['MANUFACTURER_D_NAME'].str.replace('[.,]|INC|LLC|LTD(?!O)','', regex=True).str.strip(' ,._-/*')
 dev['BRAND_NAME'] = dev['BRAND_NAME'].str.replace('UNK_|UNKNOWN|UNKNOWN_','', regex=True).str.strip(' ,._-/*[]()')
 dev = dev[~(dev.BRAND_NAME == '')]
+dev = dev[~(dev.BRAND_NAME == 'UNK')]
+# dev = dev[~(dev.BRAND_NAME.astype(str).str.contains('|'))]
+dev = dev[~(dev.MODEL_NUMBER == 'UNK')]
 dev = dev[~(dev.MANUFACTURER_D_NAME == '')]
 
-#manufacturer groupings (manually defined in this csv)
-mg = pd.read_csv('data/device/manufacturers.csv')
-maps = mg[~pd.isna(mg['Group'])]
-maps['Group'] = maps['Group'].str.lower()
-for gr, dfg in maps.groupby('Group'):
-    m = np.isin(dev['MANUFACTURER_D_NAME'], dfg.MANUFACTURER)
-    if not any(m): continue
-    t = dev[m]
-    values, counts = np.unique(t['MANUFACTURER_D_NAME'], return_counts=True)
-    dev.loc[m, 'MANUFACTURER_D_NAME'] = values[np.argmax(counts)]
+print('First cleaning done')
+
+#manufacturer groupings (defined in this csv)
+mg = pd.read_csv('data/device/mfrNameMap.csv').set_index('mfr')['mfr2'].to_dict()
+dev['MANUFACTURER_D_NAME'] = dev['MANUFACTURER_D_NAME'].replace(mg)
 print('Manufacturer names harmonized')
 
 #for nan manufacturers, take 1) mfr from most common use of MODEL_NUMBER or if no other mn use then 2) mfr of most common product with same brand name
