@@ -99,16 +99,17 @@ def home(request):
     return render(request, 'problems/home.html', context)
 
 def sitemap(request):
-    pagelist = []
-    pagelist.append(request.build_absolute_uri(reverse('index')))
-    pagelist.append(request.build_absolute_uri(reverse('device_search')))
-    pagelist.append(request.build_absolute_uri(reverse('robots.txt')))
-    devices = Device.objects.all()
-    for d in devices:
-        try:
-            pagelist.append(request.build_absolute_uri(reverse('device_info', kwargs={"mn": d.model_number})))
-        except: 
-            pass
-    context = {'pagelist':pagelist}
-    return render(request, 'problems/sitemap.txt', context, content_type='text/html')
+    # pagelist = []
+    # pagelist.append(request.build_absolute_uri(reverse('index')))
+    # pagelist.append(request.build_absolute_uri(reverse('device_search')))
+    # pagelist.append(request.build_absolute_uri(reverse('robots.txt')))
+    # devices = Device.objects.all()
+    # for d in devices:
+    #     try:
+    #         pagelist.append(request.build_absolute_uri(reverse('device_info', kwargs={"mn": d.model_number})))
+    #     except: 
+    #         pass
+    # context = {'pagelist':pagelist}
+    context = {}
+    return render(request, 'problems/sitemap.txt', context, content_type='text')
     # return HttpResponse('\n'.join(pagelist))
