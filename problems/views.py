@@ -109,6 +109,6 @@ def sitemap(request):
             pagelist.append(request.build_absolute_uri(reverse('device_info', kwargs={"mn": d.model_number})))
         except: 
             pass
-    # context = {'pagelist':pagelist}
-    # return render(request, 'problems/sitemap.xml', context)
-    return HttpResponse('\n'.join(pagelist))
+    context = {'pagelist':pagelist}
+    return render(request, 'problems/sitemap.txt', context, content_type='text/html')
+    # return HttpResponse('\n'.join(pagelist))
