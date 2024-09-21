@@ -7,6 +7,8 @@ from multiprocessing import Pool
 import matplotlib.pyplot as plt
 from sklearn.cluster import DBSCAN
 
+brands = np.load('data/device/brandNames.npy', allow_pickle=True)
+
 def f(i):
     if i%10 == 0: 
         prog = (i*(2*brands.shape[0] - i)/2)/(brands.shape[0]*brands.shape[0]/2)
@@ -14,13 +16,13 @@ def f(i):
     out = np.zeros(brands.shape[0])
     out[i] = 1
     for j in range(i+1, brands.shape[0]):
-        out[j] = SequenceMatcher(None, brands[i], brands[j]).ratio()
+        out[j] = SequenceMatcher(None, brands[i], brands[j]).quick_ratio()
     return out
 
 if __name__ == '__main__':
     if True:
         # get list of pre-agg names
-        if True:
+        if False:
             devfiles = glob.glob('data/device/DEVICE*.txt')
             devs = []
             for dfile in devfiles:
@@ -33,6 +35,7 @@ if __name__ == '__main__':
             np.save('data/device/brandCounts.npy', brands[1])
         else:
             brands = np.load('data/device/brandNames.npy', allow_pickle=True)
+
         # calculate similarity ratio
         with Pool(8) as p:
             x = np.array(list(p.map(f, np.arange(brands.shape[0]))))        
