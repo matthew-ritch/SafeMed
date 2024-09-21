@@ -3,12 +3,15 @@ from django.http import JsonResponse, HttpResponse
 from problems.models import Manufacturer, Device, MDR, DeviceProblem, PatientProblem
 from django.db.models import Count
 from django.urls import reverse
+from django.contrib.sitemaps import Sitemap
 
 import numpy as np
 import pandas as pd
 import logging
 import plotly.graph_objects as go
 import plotly.io as pio
+
+
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(filename='myapp.log', level=logging.INFO)
@@ -98,18 +101,21 @@ def home(request):
     context = {}
     return render(request, 'problems/home.html', context)
 
-def sitemap(request):
-    # pagelist = []
-    # pagelist.append(request.build_absolute_uri(reverse('index')))
-    # pagelist.append(request.build_absolute_uri(reverse('device_search')))
-    # pagelist.append(request.build_absolute_uri(reverse('robots.txt')))
-    # devices = Device.objects.all()
-    # for d in devices:
-    #     try:
-    #         pagelist.append(request.build_absolute_uri(reverse('device_info', kwargs={"mn": d.model_number})))
-    #     except: 
-    #         pass
-    # context = {'pagelist':pagelist}
-    context = {}
-    return render(request, 'problems/sitemap.txt', context, content_type='text')
-    # return HttpResponse('\n'.join(pagelist))
+class DeviceSitemap(Sitemap):
+    changefreq = "daily"
+    priority = 0.5
+    def items(self):
+        return Device.objects.exclude(model_number__contains="/").annotate(co = Count('mdr')).filter(co__gte = 20)
+    def location(self, item):
+        return reverse('device_info', kwargs={"mn": item.model_number})
+
+class StaticViewSitemap(Sitemap):
+    priority = 1
+    changefreq = "daily"
+
+    def items(self):
+        return ["index", "device_search", "robots.txt"]
+
+    def location(self, item):
+        return reverse(item)
+    
