@@ -92,3 +92,8 @@ def device_search(request):
         logger.info(f'Device Search / {request.POST['device_name_search']} / {request.POST['manufacturer_name_search']}')
 
     return render(request, 'problems/device_search.html', context)
+
+def home(request):
+    context = {}
+    
+    return render(request, 'problems/home.html', context)
