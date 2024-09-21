@@ -105,7 +105,7 @@ class DeviceSitemap(Sitemap):
     changefreq = "daily"
     priority = 0.5
     def items(self):
-        return Device.objects.exclude(model_number__contains="/").annotate(co = Count('mdr')).filter(co__gte = 20)
+        return Device.objects.exclude(model_number__contains="/").annotate(co = Count('mdr')).order_by('-co')[:1000]
     def location(self, item):
         return reverse('device_info', kwargs={"mn": item.model_number})
 
