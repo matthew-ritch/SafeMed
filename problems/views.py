@@ -1,7 +1,8 @@
 from django.shortcuts import render
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from problems.models import Manufacturer, Device, MDR, DeviceProblem, PatientProblem
 from django.db.models import Count
+from django.urls import reverse
 
 import numpy as np
 import pandas as pd
@@ -95,5 +96,19 @@ def device_search(request):
 
 def home(request):
     context = {}
-    
     return render(request, 'problems/home.html', context)
+
+def sitemap(request):
+    pagelist = []
+    pagelist.append(request.build_absolute_uri(reverse('index')))
+    pagelist.append(request.build_absolute_uri(reverse('device_search')))
+    pagelist.append(request.build_absolute_uri(reverse('robots.txt')))
+    devices = Device.objects.all()
+    for d in devices:
+        try:
+            pagelist.append(request.build_absolute_uri(reverse('device_info', kwargs={"mn": d.model_number})))
+        except: 
+            pass
+    # context = {'pagelist':pagelist}
+    # return render(request, 'problems/sitemap.xml', context)
+    return HttpResponse('\n'.join(pagelist))

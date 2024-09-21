@@ -8,5 +8,6 @@ urlpatterns = [
     path("", views.home, name="index"),
     path("device_info/<str:mn>", views.device_info, name="device_info",),
     path("device_search", views.device_search, name="device_search",),
-    path("robots.txt", TemplateView.as_view(template_name="problems/robots.txt", content_type="text/plain")),
+    path("robots.txt", TemplateView.as_view(template_name="problems/robots.txt", content_type="text/plain"), name="robots.txt"),
+    path("sitemap.xml", views.sitemap, name = "sitemap.xml"),
 ]
