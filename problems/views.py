@@ -71,11 +71,13 @@ def device_search(request):
     if request.method == 'POST':
         context['POSTED'] = True
         matches = Device.objects.all().filter(brand_name__contains=request.POST['device_name_search']).order_by('brand_name') | Device.objects.all().filter(generic_name__contains=request.POST['device_name_search']).order_by('brand_name')
-        matches = matches & Device.objects.all().filter(manufacturer__name__contains=request.POST['manufacturer_name_search']).order_by('brand_name')
-        matches = matches.annotate(co = Count('manufacturer')).filter(co__lte = 5)
-        matches = matches.exclude(model_number__contains="/").distinct()
-        matches = matches[:1000] #TODO make pages of results. currently empty searches crash
+        matches = matches & Device.objects.all().filter(manufacturer__name__contains=request.POST['manufacturer_name_search'])#.order_by('brand_name')
+        matches = matches.annotate(co = Count('manufacturer', distinct = True)).filter(co__lte = 10)
+        matches = matches.annotate(coMDR = Count('mdr')).order_by('-coMDR')
+        matches = matches.exclude(model_number__contains="/").exclude(model_number="*").exclude(model_number="UNKNOWN").distinct()
+        matches = matches[:5000] #TODO make pages of results. currently empty searches crash
         mfrs = []
+        mfrsCounts = {}
         for m in matches:
             mms = np.sort(m.manufacturer.all().values_list('name',flat=True))
             if len(mms) > 5:
@@ -83,9 +85,11 @@ def device_search(request):
             else:
                 m.mnames = ', '.join(mms)
             mfrs.append(m.mnames)
+            mfrsCounts[m.mnames] = (mfrsCounts[m.mnames] + m.coMDR if m.mnames in mfrsCounts.keys() else m.coMDR)
         mfrs = np.array(mfrs)
-        umfrs = np.unique(mfrs)
-
+        umfrs, mc = np.unique(mfrs, return_counts=True)
+        counts = np.array([mfrsCounts[x] for x in umfrs]) / mc
+        umfrs = umfrs[np.argsort(-counts)]
         context['mmatches'] = {}
         for mfr in umfrs:
             context['mmatches'][mfr] = [matches[int(i)] for i in np.arange(len(matches))[mfrs == mfr]]
