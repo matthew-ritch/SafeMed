@@ -10,6 +10,7 @@ import pandas as pd
 import logging
 import plotly.graph_objects as go
 import plotly.io as pio
+import time
 
 
 
@@ -70,33 +71,37 @@ def device_search(request):
     context = {}
     if request.method == 'POST':
         context['POSTED'] = True
-        matches = Device.objects.all().filter(brand_name__contains=request.POST['device_name_search']).order_by('brand_name') | Device.objects.all().filter(generic_name__contains=request.POST['device_name_search']).order_by('brand_name')
-        matches = matches & Device.objects.all().filter(manufacturer__name__contains=request.POST['manufacturer_name_search'])#.order_by('brand_name')
+        ###
+        matches = Device.objects.all().filter(brand_name__contains=request.POST['device_name_search']) | Device.objects.all().filter(generic_name__contains=request.POST['device_name_search'])
+        matches = matches & Device.objects.all().filter(manufacturer__name__contains=request.POST['manufacturer_name_search'])
+        ###
         matches = matches.annotate(co = Count('manufacturer', distinct = True)).filter(co__lte = 10)
-        matches = matches.annotate(coMDR = Count('mdr')).order_by('-coMDR')
-        matches = matches.exclude(model_number__contains="/").exclude(model_number="*").exclude(model_number="UNKNOWN").distinct()
+        matches = matches.annotate(coMDR = Count('mdr'))
+        matches = matches.exclude(model_number__contains="/").exclude(model_number="*").exclude(model_number="UNKNOWN")
         matches = matches[:5000] #TODO make pages of results. currently empty searches crash
+        ###
         mfrs = []
         mfrsCounts = {}
         for m in matches:
-            mms = np.sort(m.manufacturer.all().values_list('name',flat=True))
+            mms = m.manufacturer.all().order_by('name').values_list('name',flat=True)
             if len(mms) > 5:
                 m.mnames = ', '.join(mms[:5]) + ' and others'
             else:
                 m.mnames = ', '.join(mms)
             mfrs.append(m.mnames)
             mfrsCounts[m.mnames] = (mfrsCounts[m.mnames] + m.coMDR if m.mnames in mfrsCounts.keys() else m.coMDR)
+        ###
         mfrs = np.array(mfrs)
         umfrs, mc = np.unique(mfrs, return_counts=True)
         counts = np.array([mfrsCounts[x] for x in umfrs]) / mc
         umfrs = umfrs[np.argsort(-counts)]
+        ###
         context['mmatches'] = {}
         for mfr in umfrs:
             context['mmatches'][mfr] = [matches[int(i)] for i in np.arange(len(matches))[mfrs == mfr]]
-
+        ###
         context['current_device_name_search'] = request.POST['device_name_search']
         context['current_manufacturer_name_search'] = request.POST['manufacturer_name_search']
-
         logger.info(f'Device Search / {request.POST['device_name_search']} / {request.POST['manufacturer_name_search']}')
 
     return render(request, 'problems/device_search.html', context)
@@ -116,10 +121,8 @@ class DeviceSitemap(Sitemap):
 class StaticViewSitemap(Sitemap):
     priority = 1
     changefreq = "daily"
-
     def items(self):
         return ["index", "device_search", "robots.txt"]
-
     def location(self, item):
         return reverse(item)
     
