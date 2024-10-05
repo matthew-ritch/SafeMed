@@ -1,7 +1,7 @@
 from django.shortcuts import render
 from django.http import JsonResponse, HttpResponse
 from problems.models import Manufacturer, Device, MDR, DeviceProblem, PatientProblem
-from django.db.models import Count
+from django.db.models import Count, F
 from django.urls import reverse
 from django.contrib.sitemaps import Sitemap
 
@@ -21,22 +21,31 @@ def device_info(request, mn):
     context = {}
     device = Device.objects.get(model_number = mn)
     mdrs = MDR.objects.filter(device = device)
-    pps = PatientProblem.objects.filter(mdr__device = device).exclude(description = 'No Clinical Signs, Symptoms or Conditions')
-    dps = DeviceProblem.objects.filter(mdr__device = device)
+    pps = PatientProblem.objects.filter(mdr__device = device).exclude(description = 'No Clinical Signs, Symptoms or Conditions').annotate(mdr_id = F('mdr'))
+    dps = DeviceProblem.objects.filter(mdr__device = device).annotate(mdr_id = F('mdr'))
     ### general info
     context['Manufacturer'] = ', '.join(list(device.manufacturer.all().values_list('name', flat=True)))
     context['BrandName'] = device.brand_name
     context['GenericName'] = device.generic_name
     n_reports = len(mdrs)
     context['n_reports'] = n_reports
+    t0 = time.time()
     ### make problem table
     if len(mdrs)>0:
         context['problem_table'] = []
-        for mdr in mdrs:
-            patient_problems = ', '.join(mdr.patient_problem.all().values_list('description',flat=True))
-            device_problems = ', '.join(mdr.device_problem.all().values_list('description',flat=True))
-            context['problem_table'].append({'Date':mdr.event_date,'Event Type':mdr.event_type, 'Patient Problem':patient_problems if len(patient_problems)>0 else 'None', 'Device Problem':device_problems if len(device_problems)>0 else 'None', })
+        pp_df = pd.DataFrame(pps.values())
+        ppstrings = pp_df.groupby('mdr_id')['description'].apply(lambda x: ', '.join(np.sort(x)))
+        dpstrings = pp_df.groupby('mdr_id')['description'].apply(lambda x: ', '.join(np.sort(x)))
+        mids = mdrs.values_list('mdr_report_key', flat=True)
+        m1 = np.isin(mids, ppstrings.index)
+        m2 = np.isin(mids, dpstrings.index)
+        for i, mdr in enumerate(mdrs):
+            device_problems = dpstrings[mdr.mdr_report_key] if m1[i] else ''
+            patient_problems = ppstrings[mdr.mdr_report_key] if m2[i] else ''
+            context['problem_table'].append({'Date':mdr.event_date,'Event Type':mdr.event_type, 'Patient Problem':patient_problems if len(patient_problems)>0 else 'Unspecified', 'Device Problem':device_problems if len(device_problems)>0 else 'Unspecified', })
         context['problem_table'] = pd.DataFrame(context['problem_table']).sort_values(by='Date', ascending=False).to_html(index=False)
+    print('problem table', time.time() - t0)
+    t0 = time.time()
     ### agg for problem type by year
     if len(mdrs)>4:
         df = pd.DataFrame.from_records(mdrs.values())
@@ -46,6 +55,8 @@ def device_info(request, mn):
         plots = {}
         c = {'Death':'red','Injury':'orange','Malfunction':'purple'}
         p = {'Death':'Deaths','Injury':'Injuries','Malfunction':'Malfunctions'}
+        print('pivot table', time.time() - t0)
+        t0 = time.time()
         for et in ['Death','Injury','Malfunction']:
             if et not in pt.columns:
                 pt[et] = np.zeros(len(pt.index))
@@ -61,9 +72,9 @@ def device_info(request, mn):
                 template = 'plotly_white',
                 width=400, height=400)
             plots[et] = pio.to_html(fig, include_plotlyjs='cdn', full_html=False, default_width='100%', default_height='100%',)
+            print(f'{et} plot', time.time() - t0)
+            t0 = time.time()
         context['plots'] = plots
-        
-
     return render(request, 'problems/device_info.html', context)
 
 def device_search(request):
