@@ -13,7 +13,9 @@
                     </div>
                 <div class="flex flex-col flex-grow p-4">
                     <div class="pb-16 mx-auto max-w-screen-sm antialiased prose">
-                        <p><h3>Search for a medical device to see its safety history.</h3></p>
+                        <div class="flex w-full justify-center">
+                            <p><h3>Click a device's name to see its safety history.</h3></p>
+                        </div>
                         <div class="flex w-full justify-center">
                             <form id = "devsearch" action = "{% url 'device_search' %}" method="post">
                                 {% csrf_token %}
@@ -45,7 +47,7 @@
                         <div class="flex w-full justify-center pb-16 mx-auto max-w-screen-sm antialiased prose">
                             <ul>
                                 {% for mname, matches in mmatches.items %}
-                                    <li>{{mname}}</li>
+                                    <li> Manufacturer: {{mname}}</li>
                                     <ul>
                                         {% for match in matches %}
                                             <li><a href={% url 'device_info' match.model_number %}>{{ match.brand_name }}</a></li>
