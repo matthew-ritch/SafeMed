@@ -13,9 +13,8 @@ import plotly.io as pio
 import time
 
 
-
 logger = logging.getLogger(__name__)
-logging.basicConfig(filename='myapp.log', level=logging.INFO)
+logging.basicConfig(filename='myapp.log', level=logging.INFO, format='%(asctime)s %(levelname)-8s %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
 
 def device_info(request, mn):
     logger.info(f'Device Info / {mn}')
@@ -107,10 +106,12 @@ def device_search(request):
     return render(request, 'problems/device_search.html', context)
 
 def home(request):
+    logger.info(f'Homepage')
     context = {}
     return render(request, 'problems/home.html', context)
 
 class DeviceSitemap(Sitemap):
+    logger.info(f'Device Sitemap')
     changefreq = "daily"
     priority = 0.5
     def items(self):
@@ -119,6 +120,7 @@ class DeviceSitemap(Sitemap):
         return reverse('device_info', kwargs={"mn": item.model_number})
 
 class StaticViewSitemap(Sitemap):
+    logger.info(f'Static Sitemap')
     priority = 1
     changefreq = "daily"
     def items(self):
