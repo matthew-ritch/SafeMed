@@ -111,7 +111,6 @@ def home(request):
     return render(request, 'problems/home.html', context)
 
 class DeviceSitemap(Sitemap):
-    logger.info(f'Device Sitemap')
     changefreq = "daily"
     priority = 0.5
     def items(self):
@@ -120,7 +119,6 @@ class DeviceSitemap(Sitemap):
         return reverse('device_info', kwargs={"mn": item.model_number})
 
 class StaticViewSitemap(Sitemap):
-    logger.info(f'Static Sitemap')
     priority = 1
     changefreq = "daily"
     def items(self):
