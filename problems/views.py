@@ -89,7 +89,7 @@ def device_search(request):
         matches = matches & Device.objects.all().filter(manufacturer__name__contains=request.POST['manufacturer_name_search'])
         ###
         matches = matches.annotate(co = Count('manufacturer', distinct = True)).filter(co__lte = 10)
-        matches = matches.annotate(coMDR = Count('mdr'))
+        matches = matches.annotate(coMDR = Count('mdr')).order_by('-coMDR')
         matches = matches.exclude(model_number__contains="/").exclude(model_number="*").exclude(model_number="UNKNOWN")
         matches = matches[:1000] #TODO make pages of results. currently empty searches crash
         ###
