@@ -34,14 +34,19 @@ def device_info(request, mn):
     if len(mdrs)>0:
         context['problem_table'] = []
         pp_df = pd.DataFrame(pps.values())
-        ppstrings = pp_df.groupby('mdr_id')['description'].apply(lambda x: ', '.join(np.sort(x)))
-        dpstrings = pp_df.groupby('mdr_id')['description'].apply(lambda x: ', '.join(np.sort(x)))
+        dp_df = pd.DataFrame(dps.values())
         mids = mdrs.values_list('mdr_report_key', flat=True)
-        m1 = np.isin(mids, ppstrings.index)
-        m2 = np.isin(mids, dpstrings.index)
+        ppstrings = ''; dpstrings = ''
+        m1 = m2 = np.zeros(len(mdrs))
+        if len(pps) > 0:
+            ppstrings = pp_df.groupby('mdr_id')['description'].apply(lambda x: ', '.join(np.sort(x)))
+            m1 = np.isin(mids, ppstrings.index)
+        if len(dps) > 0:
+            dpstrings = dp_df.groupby('mdr_id')['description'].apply(lambda x: ', '.join(np.sort(x)))
+            m2 = np.isin(mids, dpstrings.index)
         for i, mdr in enumerate(mdrs):
-            device_problems = dpstrings[mdr.mdr_report_key] if m1[i] else ''
-            patient_problems = ppstrings[mdr.mdr_report_key] if m2[i] else ''
+            patient_problems = ppstrings[mdr.mdr_report_key] if m1[i] else ''
+            device_problems = dpstrings[mdr.mdr_report_key] if m2[i] else ''
             context['problem_table'].append({'Date':mdr.event_date,'Event Type':mdr.event_type, 'Patient Problem':patient_problems if len(patient_problems)>0 else 'Unspecified', 'Device Problem':device_problems if len(device_problems)>0 else 'Unspecified', })
         context['problem_table'] = pd.DataFrame(context['problem_table']).sort_values(by='Date', ascending=False).to_html(index=False)
     print('problem table', time.time() - t0)
