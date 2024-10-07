@@ -10,7 +10,7 @@ import pandas as pd
 import logging
 import plotly.graph_objects as go
 import plotly.io as pio
-import time
+import re
 import gc
 
 
@@ -18,6 +18,10 @@ logger = logging.getLogger(__name__)
 logging.basicConfig(filename='myapp.log', level=logging.INFO, format='%(asctime)s %(levelname)-8s %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
 
 def device_info(request, mn):
+    if re.search(request.META['HTTP_USER_AGENT'], 'Mobi|Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini'): #ismobile
+        w = 300; h=300
+    else:
+        w = 800; h=400
     logger.info(f'Device Info / {mn}')
     context = {}
     device = Device.objects.get(model_number = mn)
@@ -76,7 +80,7 @@ def device_info(request, mn):
                 xaxis_title = 'Month',
                 yaxis_title = f'{p[et]}',
                 template = 'plotly_white',
-                width=400, height=400)
+                width=w, height=h)
             plots[et] = pio.to_html(fig, config = {'responsive': True, 'autosizable':True}, include_plotlyjs='cdn', full_html=False, default_width='100%', default_height='100%',)
         context['plots'] = plots
     gc.collect()
