@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 logging.basicConfig(filename='myapp.log', level=logging.INFO, format='%(asctime)s %(levelname)-8s %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
 
 def device_info(request, mn):
-    if re.search(request.META['HTTP_USER_AGENT'], 'Mobi|Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini'): #ismobile
+    if re.search('Mobi|Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini', request.META['HTTP_USER_AGENT']): #ismobile
         w = 300; h=300
     else:
         w = 800; h=400
