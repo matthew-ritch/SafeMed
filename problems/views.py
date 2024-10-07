@@ -52,7 +52,8 @@ def device_info(request, mn):
             g = dp_df.groupby(['Year', 'Description'], as_index = False)['Events/year'].count()
             g['Type'] = 'Device'
             context['problem_table'].append(g)
-        context['problem_table'] = pd.concat(context['problem_table']).sort_values(by=['Year', 'Type', 'Description'], ascending=False).to_html(index=False)
+        if len(context['problem_table']) > 0:
+            context['problem_table'] = pd.concat(context['problem_table']).sort_values(by=['Year', 'Type', 'Description'], ascending=False).to_html(index=False)
     ### agg for problem type by year
     if len(mdrs)>4:
         df = pd.DataFrame.from_records(mdrs.values())
