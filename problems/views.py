@@ -28,7 +28,8 @@ def device_info(request, mn):
         pps = pps.filter(date__gte = pd.to_datetime('1/1/2020'))
         dps = dps.filter(date__gte = pd.to_datetime('1/1/2020'))
     ### general info
-    context['Manufacturer'] = ', '.join(list(device.manufacturer.all().values_list('name', flat=True)))
+    ms = list(device.manufacturer.all().values_list('name', flat=True))
+    context['Manufacturer'] = ', '.join(ms) if len(ms) < 6 else ', '.join(ms[:5]) + ' and others'
     context['BrandName'] = device.brand_name
     context['GenericName'] = device.generic_name
     n_reports = len(mdrs)
@@ -75,7 +76,7 @@ def device_info(request, mn):
                 yaxis_title = f'{p[et]}',
                 template = 'plotly_white',
                 width=400, height=400)
-            plots[et] = pio.to_html(fig, include_plotlyjs='cdn', full_html=False, default_width='100%', default_height='100%',)
+            plots[et] = pio.to_html(fig, config = {'responsive': True, 'autosizable':True}, include_plotlyjs='cdn', full_html=False, default_width='100%', default_height='100%',)
         context['plots'] = plots
     gc.collect()
     return render(request, 'problems/device_info.html', context)
