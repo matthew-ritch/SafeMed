@@ -87,13 +87,19 @@ if True:
     #only add new mdrs
     print('Only add new mdrs')
     current_mdrs = MDR.objects.all().values_list('mdr_report_key')
+    print('a')
     m = np.isin(joined.MDR_REPORT_KEY, current_mdrs)
+    print('b')
     joined = joined[~m].reset_index(drop=True)
+    print('c')
     joined = joined.drop_duplicates('MDR_REPORT_KEY')
+    print('d')
     # print('Only add mdrs for which we have a device')
-    devices = np.array(Device.objects.all().values_list('model_number', flat=True))
+    # devices = np.array(Device.objects.all().values_list('model_number', flat=True))
+    print('e')
     # dev_to_add = joined[np.isin(joined.MODEL_NUMBER, devices)].reset_index(drop=True) #so we can skip the filter step
     devices = Device.objects.all()
+    print('f')
     #mdrs
     # datefields joined[['DATE_RECEIVED', 'DATE_REPORT', 'DATE_OF_EVENT']]
     event_type_map = {'D':'Death','IN':'Injury','N':'Injury','IL':'Injury','IJ':'Injury','M':'Malfunction','O':'Other','*':'Unknown'}
